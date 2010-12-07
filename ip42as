@@ -1,0 +1,6 @@
+#!/bin/sh
+
+IP=`echo -n $1 | awk -F . '{print $4 "." $3 "." $2 "." $1}'` 
+echo -n "$1: "
+dig +short $IP.origin.asn.cymru.com TXT
+

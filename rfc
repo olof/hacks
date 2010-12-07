@@ -1,0 +1,13 @@
+#!/bin/sh
+
+uri_tmpl='http://www.rfc-editor.org/rfc/rfc%d.txt';
+rfcn=`echo -n $1 | sed s/[^0-9]//g`;
+
+if [ -z "$rfcn" ]; then
+	echo  "Usage: rfc <RFC>";
+	exit;
+fi
+
+uri=`printf $uri_tmpl $rfcn`;
+
+curl --silent $uri | less;

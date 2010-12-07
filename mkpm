@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+# mkpm - create the directory structure for a new Perl Module
+#
+# Copyright 2010, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice are
+# preserved. This file is offered as-is, without any warranty.
+
+=head1 NAME
+
+mkpm - create the directory structure for a new Perl Module
+
+=head1 SYNOPSIS
+
+ mkpm [OPTIONS] <module>
+
+=head1 OPTIONS
+
+=over
+
+=item --name, the name of the author
+
+=item --email, the email of the author
+
+=item --notest, don't generate /t tree
+
+=item --nodoc, don't generate /doc tree
+
+=item --quiet, don't output anything but errors and warnings
+
+=item --git, initialize a git repository
+
+=back
+
+=head1 COPYING
+
+Copyright 2010, Olof Johansson <olof@ethup.se>
+
+Copying and distribution of this file, with or without modification, are
+permitted in any medium without royalty provided the copyright notice are
+preserved. This file is offered as-is, without any warranty.
+
+=cut
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+sub usage {
+	print << 'EOF';
+     mkpm [OPTIONS] <module>
+
+OPTIONS
+    --name, the name of the author
+    --email, the email of the author
+    --notest, don't generate /t tree
+    --nodoc, don't generate /doc tree
+    --quiet, don't output anything but errors and warnings
+    --git, initialize a git repository
+EOF
+}
+
+my ($git,$notest,$nodoc,$help);
+my $verbose = 1;
+my $name = 'UNKNOWN';
+my $email = 'UNKNOWN';
+GetOptions(
+	'git' => \$git,
+	'notest' => \$notest,
+	'nodoc' => \$nodoc,
+	'quiet' => \$verbose,
+	'name' => \$name,
+	'email' => \$email,
+	'help' => \&usage,
+);
+
+my $module = shift;
+usage(), exit 0 if(!defined $module or $help);
+
+if($name eq 'UNKNOWN' or $email eq 'UNKNOWN') {
+	print STDERR << 'EOF';
+W: You 'have to' set a name and email for use in copyright statement. 
+   This is done with --name/--email or by manually editing the script.
+EOF
+}
+
+unless($module=~/^(\w+::)*\w+$/) {
+	print STDERR "E: Invalid module name: $module\n";
+	exit 1;
+}
+
+my $dir = $module;
+$dir =~ s/::/-/g;
+
+print "* Creating directories\n";
+mkdir($dir) or die("Could not mkdir $dir: $!");
+mkdir("$dir/t") or warn("Coult not create /t: $!") unless $notest;
+mkdir("$dir/lib") or warn("Coult not create /lib: $!");
+mkdir("$dir/doc") or warn("Coult not create /doc: $!") unless $nodoc;
+
+my $path = "$dir/lib";
+my @parts = split /-/, $dir;
+foreach(@parts[0..$#parts-1]) {
+	$path.="/$_";
+	mkdir("$path") or warn("Could not mkdir $path: $!"), last;
+}
+
+my $year = 1900+(localtime)[5];
+open FH, ">", "$path/$parts[$#parts].pm";
+print FH << "EOF";
+#!/usr/bin/perl
+# Copyright $year, $name <$email>
+package $module;
+use strict;
+use warnings;
+EOF
+
+print "* Creating (empty) boilerplate files\n";
+open FH, ">$dir/CHANGES";
+open FH, ">$dir/README";
+open FH, ">$dir/LICENSE";
+
+if($git) {
+	chdir($dir);
+	print "* Initializing git repository\n";
+	`git init`;
+}

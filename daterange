@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use feature qw/say/;
+use Date::Calc qw/Today Delta_Days Date_to_Days/;
+
+if(@ARGV == 1) {
+	my ($y,$m,$d) = split /-/, shift;
+	if(Date_to_Days(Today) > Date_to_Days($y,$m,$d)) {
+		say Delta_Days($y,$m,$d, Today);
+	} else {
+		say Delta_Days(Today, $y,$m,$d);
+	}
+} elsif(@ARGV == 2) {
+	say Delta_Days((split /-/, shift), (split /-/, shift));
+} else {
+	say << "EOF";
+USAGE: 
+  $0 <start date> <end date> # range from start date to end date
+  $0 <end date> # range from today to end date
+  $0 <start date> # range from start date to today
+EOF
+}
+
