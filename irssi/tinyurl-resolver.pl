@@ -39,7 +39,6 @@ my @tinyfiers = (
 
 sub hastiny {
 	my($msg) = @_;
-	print $msg;
 
 	foreach(@tinyfiers) {
 		if(my($url) = $msg =~ /($_)/) {
