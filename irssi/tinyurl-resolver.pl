@@ -35,6 +35,10 @@ my @tinyfiers = (
 	qr,${prefix}bit\.ly/\w+,,
 	qr,${prefix}cot\.ag/\w+,,
 	qr,${prefix}ow\.ly/\w+,,
+	qr,${prefix}goo\.gl/\w+,,
+	qr,${prefix}tiny\.cc/\w+,,
+	qr,${prefix}t\.co/\w+,,
+	qr,${prefix}gaa\.st/\w+,,
 );
 
 sub hastiny {
