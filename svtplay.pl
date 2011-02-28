@@ -33,8 +33,9 @@ GetOptions(
 );
 
 usage() unless(@ARGV);
+my $uri = shift;
 
-my $html = get("http://svtplay.se/t/102959/pa_sparet");
+my $html = get($uri) or die($!);
 my ($flashvars) = $html =~ /<param name="flashvars" value="([^"]*)"/;
 my ($urlmap) = $flashvars =~ /dynamicStreams=(.*?)&amp;/;
 my @mapelms = split /\|/, $urlmap;
