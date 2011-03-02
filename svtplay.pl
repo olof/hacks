@@ -8,16 +8,26 @@
 # offered as-is, without any warranty.
 
 use vars qw($VERSION);
-$VERSION = '0.002';
+$VERSION = '0.003';
 my $APP  = 'svtplay';
 
 use strict;
 use warnings all => 'FATAL';
 use feature qw/say/;
 use LWP::Simple qw/get/;
-#use Data::Dumper;
 use Getopt::Long;
 use Pod::Usage qw/pod2usage/;
+
+use Data::Dumper;
+
+{
+  package Data::Dumper;
+  no strict "vars";
+
+  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+  $Quotekeys = 0;
+}
+
 
 sub usage {
 	pod2usage(
@@ -27,17 +37,23 @@ sub usage {
 	);
 }
 
-#usage() unless(@ARGV);
+usage() unless(@ARGV);
 
-my ($bitrate, $subtitle);
+my $opts;
+($opts->{bitrate}, $opts->{subtitle}) = (0, undef);
 GetOptions(
-	'b|bitrate:i'   => \$bitrate,
-	's|subtitle:s'  => \$subtitle,
+	'b|bitrate:i'   => \$opts->{bitrate},
+	's|subtitle:s'  => \$opts->{subtitle},
+
+	'd|download'	=> \$opts->{download},
+	'mp|mplayer'	=> \$opts->{mplayer},
+
 
 	'h|help'	=> \&usage,
 	'm|man'		=> sub { pod2usage(verbose => 3, exitval => 0) },
 	'v|version'	=> sub { say("$APP v", __PACKAGE__->VERSION) && exit },
 );
+
 
 
 my $uri = shift;
@@ -48,27 +64,33 @@ my ($urlmap) = $flashvars =~ /dynamicStreams=(.*?)&amp;/;
 my @mapelms = split /\|/, $urlmap;
 
 my %hash;
-foreach(@mapelms) {
-	print ">>> $_\n";
-	my %h;
-	my @elms = split /,/;
-	foreach(@elms) {
-		my($k,$v) = split /:/, $_, 2;
-		$h{$k}=$v;
-	}
-
-	if(exists $h{bitrate}) {
-		$hash{$h{bitrate}}=$h{url}
-	}
+for my $element( map{ split(/,/, $_) } @mapelms) {
+	my($k, $v) = $element =~ m{ (\w+):(.+) }x;
+	$hash{$k} = $v;
 }
 
-if(defined $bitrate) {
-	say $hash{$bitrate};
-} else {
-	foreach(sort {$a<=>$b} keys %hash) {
-		say "$_: $hash{$_}";
-	}
+if(exists($hash{ $opts->{bitrate} })) {
+	say $hash{ $opts->{bitrate} };
+	exit;
 }
+
+for my $tag(sort(keys(%hash))) {
+	printf("%8s: %s\n", $tag, $hash{$tag});
+}
+
+sub download {
+	my $url = shift;
+	system('rtmpdump', '-r', $url) == 0
+		or die("rtmpdump: $!\n");
+}
+
+sub mplayer {
+	my $url = shift;
+	system('rtmpdump', '-r', $url, '|', 'mplayer', '-cache', 400) == 0
+		or die($!);
+}
+
+__END__
 
 =pod
 
@@ -82,13 +104,49 @@ svtplay is a script that lets you extract RTMP URLs from  SVT Play.You can feed
 this URL to e.g. rtmpdump and extract the video. Note, C<--subtitle> isn't
 implemented yet.
 
+=head1 SYNOPSIS
+
+	svtplay [OPTION]... [URL]...
+
 =head1 OPTIONS
 
   -b,	--bitrate
   -s,	--subtitle
+  -d,	--download
+  -mp,	--mplayer
 
   -h,	--help
   -v,	--version
   -m,	--man
 
-=cut
+=head1 SEE ALSO
+
+L<https://github.com/trapd00r/utils/blob/master/svtplay>
+
+=head1 AUTHOR
+
+Olof 'zibri' Johansson
+
+=head1 CONTRIBUTORS
+
+    \ \ | / /
+     \ \ - /
+      \ | /
+      (O O)
+      ( < )
+      (-=-)
+
+  Magnus Woldrich
+  CPAN ID: WOLDRICH
+  magnus@trapd00r.se
+  http://japh.se
+
+=head1 COPYRIGHT
+
+Copyright 2011 the B<svtplay.pl> L</AUTHOR> and L</CONTRIBUTORS> as listed
+above.
+
+=head1 LICENSE
+
+This application is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
