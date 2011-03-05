@@ -8,25 +8,26 @@
 # offered as-is, without any warranty.
 
 use vars qw($VERSION);
-$VERSION = '0.010';
+$VERSION = '0.012';
 my $APP  = 'svtplay';
 
 use strict;
 use warnings all => 'FATAL';
 use feature qw/say/;
+use XML::Simple qw/XMLin/;
 use LWP::Simple qw/get/;
 use Getopt::Long;
 use Pod::Usage qw/pod2usage/;
 
-use Data::Dumper;
-
-{
-  package Data::Dumper;
-  no strict "vars";
-
-  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
-  $Quotekeys = 0;
-}
+#use Data::Dumper;
+#
+#{
+#  package Data::Dumper;
+#  no strict "vars";
+#
+#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
+#  $Quotekeys = 0;
+#}
 
 
 sub usage {
@@ -40,7 +41,7 @@ sub usage {
 usage() unless(@ARGV);
 
 my $opts;
-($opts->{bitrate}, $opts->{subtitle}) = (0, undef);
+($opts->{bitrate}, $opts->{subtitle}, $opts->{list}) = (0, undef, undef);
 GetOptions(
 	'b|bitrate:i'   => \$opts->{bitrate},  # XXX Not sure why we want this
 					       # or how we should use it
@@ -48,6 +49,7 @@ GetOptions(
 
 	'd|download'	=> \$opts->{download},
 	'mp|mplayer'	=> \$opts->{mplayer},
+	'l|list|recent' => \$opts->{list},
 
 
 	'h|help'	=> \&usage,
@@ -55,7 +57,23 @@ GetOptions(
 	'v|version'	=> sub { say("$APP v", __PACKAGE__->VERSION) && exit },
 );
 
-my $data = _get( shift );
+
+# XXX
+my %svt_feeds = (
+	rapport	=> '96238?vformat=flv&tag=playrapport',
+	kultur	=> '103478?expression=full&mode=plain',
+	recent	=> '96238?expression=full&mode=plain',
+);
+
+my $data;
+if($opts->{list}) {
+	my $recent = recent();
+	$data = _get( $recent->{url} );
+}
+else {
+	$data = _get( shift );
+}
+
 
 if($opts->{download}) {
 	download( $data->{url} );
@@ -65,6 +83,7 @@ elsif($opts->{mplayer}) {
 	mplayer( $data->{url } );
 	exit;
 }
+
 else {
 	say $data->{bitrate};
 	say $data->{url};
@@ -90,6 +109,40 @@ sub _get {
 	return \%h;
 }
 
+sub recent {
+	my $base = 'http://feeds.svtplay.se/v1/video/list/';
+	my $feed = shift;
+	$feed //= $base . $svt_feeds{recent};
+
+	my $programs = XMLin( get($feed) );
+
+	my($i, %shows) = (1, ());
+	for my $p(@{$programs->{channel}->{item}}) {
+		$shows{$i} = $p->{link};
+		printf("% 3d => %s\n", $i, $p->{title});
+		$i++;
+	}
+	my $choice;
+	ANSWER:
+	{
+		print "\n> ";
+		chomp( $choice = <STDIN> );
+		if($choice !~ /^[0-9]+$/) {
+			print Dumper $choice;
+			warn("Not a number: '$choice'\n");
+			goto ANSWER;
+		}
+		if( (( $choice +1 ) > $i) || ($choice < 1) ) {
+			print "I IS $i\n\n";
+			warn("Number 1 .. $i expected\n");
+			goto ANSWER;
+		}
+						 # for now
+		return { url => $shows{$choice}, bitrate => 0, }
+	}
+}
+
+
 sub download {
 	my $url = shift;
 	my $filename = time() . '.mp4';
@@ -104,8 +157,8 @@ sub download {
 	$filename =~ s{-+$}{};
 	$filename .= '.mp4'; # no consistency from svt, fuck it
 	print "using filename $filename\n\n";
-	#system('rtmpdump', '-r', $url, '-o', $filename) == 0
-	#	or die("rtmpdump: $!\n");
+	system('rtmpdump', '-r', $url, '-o', $filename) == 0
+		or die("rtmpdump: $!\n");
 }
 
 sub mplayer {
@@ -134,14 +187,15 @@ implemented yet.
 
 =head1 OPTIONS
 
-  -b,	--bitrate
-  -s,	--subtitle
-  -d,	--download
-  -mp,	--mplayer
+  -d,	--download	download video to ./
+  -mp,	--mplayer	play video using mplayer
+  -l,	--list		pick a video from the most recent ones
+  -b,	--bitrate	choose bitrate?
+  -s,	--subtitle	choose subtitle?
 
-  -h,	--help
-  -v,	--version
-  -m,	--man
+  -h,	--help		show the help and exit
+  -v,	--version	show version info and exit
+  -m,	--man		show the manual and exit
 
 =head1 SEE ALSO
 
