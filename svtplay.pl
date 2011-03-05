@@ -8,7 +8,7 @@
 # offered as-is, without any warranty.
 
 use vars qw($VERSION);
-$VERSION = '0.003';
+$VERSION = '0.010';
 my $APP  = 'svtplay';
 
 use strict;
@@ -42,8 +42,9 @@ usage() unless(@ARGV);
 my $opts;
 ($opts->{bitrate}, $opts->{subtitle}) = (0, undef);
 GetOptions(
-	'b|bitrate:i'   => \$opts->{bitrate},
-	's|subtitle:s'  => \$opts->{subtitle},
+	'b|bitrate:i'   => \$opts->{bitrate},  # XXX Not sure why we want this
+					       # or how we should use it
+	's|subtitle:s'  => \$opts->{subtitle}, # XXX What's this?
 
 	'd|download'	=> \$opts->{download},
 	'mp|mplayer'	=> \$opts->{mplayer},
@@ -54,34 +55,57 @@ GetOptions(
 	'v|version'	=> sub { say("$APP v", __PACKAGE__->VERSION) && exit },
 );
 
+my $data = _get( shift );
 
-
-my $uri = shift;
-
-my $html = get($uri) or die($!);
-my ($flashvars) = $html =~ /<param name="flashvars" value="([^"]*)"/;
-my ($urlmap) = $flashvars =~ /dynamicStreams=(.*?)&amp;/;
-my @mapelms = split /\|/, $urlmap;
-
-my %hash;
-for my $element( map{ split(/,/, $_) } @mapelms) {
-	my($k, $v) = $element =~ m{ (\w+):(.+) }x;
-	$hash{$k} = $v;
+if($opts->{download}) {
+	download( $data->{url} );
+	exit;
 }
-
-if(exists($hash{ $opts->{bitrate} })) {
-	say $hash{ $opts->{bitrate} };
+elsif($opts->{mplayer}) {
+	mplayer( $data->{url } );
+	exit;
+}
+else {
+	say $data->{bitrate};
+	say $data->{url};
 	exit;
 }
 
-for my $tag(sort(keys(%hash))) {
-	printf("%8s: %s\n", $tag, $hash{$tag});
+usage();
+
+
+my @map_elems;
+sub _get {
+	my $uri  = shift;
+	my $html =  get($uri) or die("Could not GET $uri: $!\n");
+	my($flash_vars) = $html =~ m{<param name="flashvars" value="([^"]*)"};
+	my ($urlmap) = $flash_vars =~ /dynamicStreams=(.*?)&amp;/;
+	@map_elems = split /\|/, $urlmap;
+
+	my %h = ();
+	for my $e( map{ split(/,/, $_) } @map_elems ) {
+		my($k, $v) = $e =~ m{ (\w+):(.+) }x;
+		$h{$k} = $v;
+	}
+	return \%h;
 }
 
 sub download {
 	my $url = shift;
-	system('rtmpdump', '-r', $url) == 0
-		or die("rtmpdump: $!\n");
+	my $filename = time() . '.mp4';
+	if($url =~ m{.+/(.+)mp4-[a-f]-v[1-9]}) {
+		# skavlan5var20.mp4
+		$filename = lc($1);
+		$filename =~ s!^[A-Z]+-[0-9]{2,}-[0-9]{2,}(?:[A-Z]+)?-!!i;
+	}
+	else {
+		$filename = $url =~ m{/(.+)$};
+	}
+	$filename =~ s{-+$}{};
+	$filename .= '.mp4'; # no consistency from svt, fuck it
+	print "using filename $filename\n\n";
+	#system('rtmpdump', '-r', $url, '-o', $filename) == 0
+	#	or die("rtmpdump: $!\n");
 }
 
 sub mplayer {
