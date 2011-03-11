@@ -128,7 +128,6 @@ sub recent {
 		print "\n> ";
 		chomp( $choice = <STDIN> );
 		if($choice !~ /^[0-9]+$/) {
-			print Dumper $choice;
 			warn("Not a number: '$choice'\n");
 			goto ANSWER;
 		}
