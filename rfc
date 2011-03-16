@@ -1,5 +1,20 @@
 #!/bin/sh
 
+if [ -z "$PAGER" ]; then
+	if type pager; then 
+		PAGER=pager; 
+	elif type less; then
+		PAGER=less;
+	elif type more; then
+		PAGER=less;
+	elif type cat; then
+		PAGER=cat;
+	else
+		echo "Error: No pager found. Not even cat!";
+		exit 1;
+	fi
+fi
+
 uri_tmpl='http://www.rfc-editor.org/rfc/rfc%d.txt';
 rfcn=`echo -n $1 | sed s/[^0-9]//g`;
 
@@ -10,4 +25,4 @@ fi
 
 uri=`printf $uri_tmpl $rfcn`;
 
-curl --silent $uri | less;
+curl --silent $uri | $PAGER;
