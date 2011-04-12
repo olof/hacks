@@ -33,13 +33,17 @@ my $ttl = 600;
 
 my $fh;
 my ($ipv4, $ipv6);
-open $fh, '<', "$datadir/current";
-while(<$fh>) {
-	my ($key, $val) = split /,/;
-	$ipv4 = $val if $key eq 'ipv4';
-	$ipv6 = $val if $key eq 'ipv6';
+my $currentf = "$datadir/current";
+
+if(-f $currentf) {
+	open $fh, '<', $currentf or die("failed opening $currentf: $!");
+	while(<$fh>) {
+		my ($key, $val) = split /,/;
+		$ipv4 = $val if $key eq 'ipv4';
+		$ipv6 = $val if $key eq 'ipv6';
+	}
+	close $fh;
 }
-close $fh;
 
 #my $nsupdate = Net::Bind::Update->new(
 #	origin => $origin,
@@ -54,7 +58,8 @@ print "update delete $host.$origin\n";
 if($extsrc4) {
 	my $addr = get($extsrc4);
 
-	if(defined $addr && $addr =~ /^$RE{net}{IPv4}$/ && $addr ne $ipv4) {
+	if(defined $addr and $addr =~ /^$RE{net}{IPv4}$/ and 
+	   (not defined $ipv4 or $addr ne $ipv4)) {
 		print "update add $host.$origin $ttl A $addr\n";
 		$ipv4 = $addr;
 		#$nsupdate->add(
@@ -74,7 +79,8 @@ if($extsrc4) {
 if($extsrc6) {
 	my $addr = get($extsrc6);
 
-	if(defined $addr && $addr =~ /^$IPv6_re$/ && $addr ne $ipv6) {
+	if(defined $addr and $addr =~ /^$IPv6_re$/ and
+	   (not defined $ipv6 or $addr ne $ipv6)) {
 		print "update add $host.$origin $ttl AAAA $addr\n";
 		$ipv6 = $addr;
 		#$nsupdate->add(
@@ -94,7 +100,7 @@ if($extsrc6) {
 if($exec) {
 	#$nsupdate->execute() or die("oops");
 
-	open $fh, '>', "$datadir/current";
+	open $fh, '>', $currentf or die("failed opening $currentf: $!");
 	print $fh "ipv4,$ipv4" if defined $ipv4;
 	print $fh "ipv6,$ipv6" if defined $ipv6;
 	close $fh;
