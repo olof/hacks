@@ -27,8 +27,19 @@ my $host = 'asimov';
 my $origin = 'ddns.x20.se.';
 my $extsrc4 = 'http://ipv4.ethup.se/cgi-bin/ip.cgi';
 my $extsrc6 = 'http://ipv6.ethup.se/cgi-bin/ip.cgi';
+my $datadir = '/var/lib/nsddns';
 my $keyfile = '/dev/null';
 my $ttl = 600;
+
+my $fh;
+my ($ipv4, $ipv6);
+open $fh, '<', "$datadir/current";
+while(<$fh>) {
+	my ($key, $val) = split /,/;
+	$ipv4 = $val if $key eq 'ipv4';
+	$ipv6 = $val if $key eq 'ipv6';
+}
+close $fh;
 
 #my $nsupdate = Net::Bind::Update->new(
 #	origin => $origin,
@@ -43,31 +54,48 @@ print "update delete $host.$origin\n";
 if($extsrc4) {
 	my $addr = get($extsrc4);
 
-	if(defined $addr && $addr =~ /^$RE{net}{IPv4}$/) {
+	if(defined $addr && $addr =~ /^$RE{net}{IPv4}$/ && $addr ne $ipv4) {
 		print "update add $host.$origin $ttl A $addr\n";
+		$ipv4 = $addr;
 		#$nsupdate->add(
 		#	name=>$host,
 		#	type=>'A',
 		#	data=>$addr,
 		#);
 		$exec = 1;
+	} else {
+		$ipv4 = undef;
 	}
+} elsif(defined $ipv4) {
+	$ipv4 = undef;
+	$exec = 1;
 }
 
 if($extsrc6) {
 	my $addr = get($extsrc6);
 
-	if(defined $addr && $addr =~ /^$IPv6_re$/) {
+	if(defined $addr && $addr =~ /^$IPv6_re$/ && $addr ne $ipv6) {
 		print "update add $host.$origin $ttl AAAA $addr\n";
+		$ipv6 = $addr;
 		#$nsupdate->add(
 		#	name=>$host,
 		#	type=>'AAAA',
 		#	data=>$addr,
 		#);
 		$exec = 1;
+	} else {
+		$ipv6 = undef;
 	}
+} elsif(defined $ipv6) {
+	$ipv6 = undef;
+	$exec = 1;
 }
 
 if($exec) {
-	#$nsupdate->execute();
+	#$nsupdate->execute() or die("oops");
+
+	open $fh, '>', "$datadir/current";
+	print "ipv4,$ipv4" if defined $ipv4;
+	print "ipv6,$ipv6" if defined $ipv6;
 }
+
