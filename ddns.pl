@@ -1,11 +1,20 @@
 #!/usr/bin/perl
 # nsupdate based ddns script, draft
 #
-# Copyright (c) 2011 - Olof Johansson <olof@cpan.org>
+# Copyright (c) 2011 - Olof Johansson <olof@ethup.se>
 # All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself.
+
+# Blocked by:
+# * Net::Bind::Update needs to be completed
+# 
+# Dependencies:
+# * LWP
+# * Regexp::Common
+# * Regexp::IPv6
+# * (Net::Bind::Update) (unpublished, unfinished, etc)
 
 use warnings;
 use strict;
