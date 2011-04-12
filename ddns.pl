@@ -95,7 +95,8 @@ if($exec) {
 	#$nsupdate->execute() or die("oops");
 
 	open $fh, '>', "$datadir/current";
-	print "ipv4,$ipv4" if defined $ipv4;
-	print "ipv6,$ipv6" if defined $ipv6;
+	print $fh "ipv4,$ipv4" if defined $ipv4;
+	print $fh "ipv6,$ipv6" if defined $ipv6;
+	close $fh;
 }
 
