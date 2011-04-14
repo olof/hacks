@@ -26,13 +26,13 @@ my $config = new Config::Simple('/etc/ddnsupdate/config') or die(
 	. Config::Simple->error()
 );
 
-my $host = $config->param('hostname'); 
+my $hostname = $config->param('hostname'); 
 my $zone = $config->param('zone');
 my $keyfile = $config->param('keyfile');
 my $ttl = $config->param('ttl') // 600;
 my $datadir = '/var/lib/ddnsupdate';
 
-die("Not defined: host") unless $host;
+die("Not defined: host") unless $hostname;
 die("Not defined: zone") unless $zone;
 die("Not defined: keyfile") unless $keyfile;
 
@@ -64,7 +64,6 @@ my $nsupdate = Net::Bind9::Update->new(
 
 my $exec = 0;
 $nsupdate->del(name=>$hostname);
-print "update delete $hostname.$zone\n";
 
 if($remote4) {
 	my $addr = get($remote4);
@@ -92,7 +91,7 @@ if($remote6) {
 
 	if(defined $addr and $addr =~ /^$IPv6_re$/ and
 	   (not defined $ipv6 or $addr ne $ipv6)) {
-		print "update add $hostname.$zoen $ttl AAAA $addr\n";
+		print "update add $hostname.$zone $ttl AAAA $addr\n";
 		$ipv6 = $addr;
 		$nsupdate->add(
 			name=>$hostname,
