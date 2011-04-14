@@ -70,7 +70,7 @@ if($remote4) {
 
 	if(defined $addr and $addr =~ /^$RE{net}{IPv4}$/ and 
 	   (not defined $ipv4 or $addr ne $ipv4)) {
-		print "update add $hostname.$zone $ttl A $addr\n";
+	   	print "update with A $addr\n";
 		$ipv4 = $addr;
 		$nsupdate->add(
 			name=>$hostname,
@@ -91,7 +91,7 @@ if($remote6) {
 
 	if(defined $addr and $addr =~ /^$IPv6_re$/ and
 	   (not defined $ipv6 or $addr ne $ipv6)) {
-		print "update add $hostname.$zone $ttl AAAA $addr\n";
+		print "update with AAAA $addr\n";
 		$ipv6 = $addr;
 		$nsupdate->add(
 			name=>$hostname,
