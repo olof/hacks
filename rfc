@@ -6,7 +6,7 @@ if [ -z "$PAGER" ]; then
 	elif type less; then
 		PAGER=less;
 	elif type more; then
-		PAGER=less;
+		PAGER=more;
 	elif type cat; then
 		PAGER=cat;
 	else
