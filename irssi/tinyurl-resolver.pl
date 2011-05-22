@@ -92,9 +92,6 @@ sub get_location {
 	my $location;
 	my ($url) = @_;
 	
-	my ($host) = $url =~ m,http://(.[^/:]+)/,;
-	return undef unless defined $host;
-
 	my $ua = LWP::UserAgent->new(
 		max_redirect => 0,
 	);
