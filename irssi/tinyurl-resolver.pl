@@ -45,9 +45,8 @@ sub hastiny {
 	my($msg) = @_;
 
 	foreach(@tinyfiers) {
-		$msg = uc $msg;
-		if(my($url) = $msg =~ /($_)/) {
-			if($url =~ /^www/) {
+		if(my($url) = $msg =~ /($_)/i) {
+			if($url =~ /^www/i) {
 				return "http://$url";
 			}
 
