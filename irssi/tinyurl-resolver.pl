@@ -7,7 +7,7 @@
 # offered as-is, without any warranty.
 
 use strict;
-use IO::Socket::INET;
+use LWP::UserAgent;
 use Irssi;
 
 my $VERSION = '0.4';
@@ -88,26 +88,17 @@ sub get_location {
 	my ($host) = $url =~ m,http://(.[^/:]+)/,;
 	return undef unless defined $host;
 
-	my $sock = IO::Socket::INET->new (
-		PeerAddr => $host,
-		PeerPort => 'http(80)',
-		Proto => 'tcp',
+	my $ua = LWP::UserAgent->new(
+		max_redirect => 0,
 	);
-	
-	print $sock "GET $url HTTP/1.1\r\n".
-	            "host: $host\r\n".
-	            "user-agent: tinyurl-resolver/0.4 (irssi)\r\n".
-	            "\r\n";
-	
-	while(<$sock>) {
-		if(/^Location: (\S+)\r\n$/si) {
-			$location=$1;
-			last;
-		}
-	}
 
-	close $sock;
-	return $location; 
+	$ua->agent("$IRSSI{name}/$VERSION (irssi)");
+	$ua->timeout(3);
+	$ua->env_proxy;
+
+	my $response = $ua->head($url);
+
+	return $response->header('location'); 
 }
 
 Irssi::signal_add("message public", \&istiny);
