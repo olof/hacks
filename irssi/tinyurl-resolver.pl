@@ -58,7 +58,7 @@ sub hastiny {
 	return undef;
 }
 
-sub istiny {
+sub resolve {
 	my($server, $msg, $nick, $address, $target) = @_;
 	$target=$nick if $target eq undef;
 
@@ -67,7 +67,7 @@ sub istiny {
 		
 		if($loc) {
 			$server->window_item_find($target)->print(
-				"%y$url%n/$1 -> $loc", 
+				"%y$url%n -> $loc", 
 				MSGLEVEL_CLIENTCRAP
 			);
 		} elsif($debug) {
@@ -101,6 +101,6 @@ sub get_location {
 	return $response->header('location'); 
 }
 
-Irssi::signal_add("message public", \&istiny);
-Irssi::signal_add("message private", \&istiny);
+Irssi::signal_add("message public", \&resolve);
+Irssi::signal_add("message private", \&resolve);
 
