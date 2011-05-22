@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-# vim: noexpandtab ts=8 sw=8:
 # Copyright 2011, Olof Johansson <olof@ethup.se>
+# Copyright 2011, Magnus Woldrich <magnus@trapd00r.se>
 #
 # Copying and distribution of this file, with or without
 # modification, are permitted in any medium without royalty
@@ -8,32 +8,20 @@
 # offered as-is, without any warranty.
 
 use vars qw($VERSION);
-$VERSION = '0.012';
+$VERSION = '0.2';
 my $APP  = 'svtplay';
 
 use strict;
-use warnings all => 'FATAL';
 use feature qw/say/;
 use XML::Simple qw/XMLin/;
 use LWP::Simple qw/get/;
 use Getopt::Long;
 use Pod::Usage qw/pod2usage/;
 
-#use Data::Dumper;
-#
-#{
-#  package Data::Dumper;
-#  no strict "vars";
-#
-#  $Terse = $Indent = $Useqq = $Deparse = $Sortkeys = 1;
-#  $Quotekeys = 0;
-#}
-
-
 sub usage {
 	pod2usage(
 		verbose  => 99,
-		exitval	 => 0,
+		exitval  => 0,
 		sections => q{DESCRIPTION|OPTIONS},
 	);
 }
@@ -43,114 +31,63 @@ usage() unless(@ARGV);
 my $opts;
 ($opts->{bitrate}, $opts->{subtitle}, $opts->{list}) = (0, undef, undef);
 GetOptions(
-	'b|bitrate:i'   => \$opts->{bitrate},  # XXX Not sure why we want this
-					       # or how we should use it
-	's|subtitle:s'  => \$opts->{subtitle}, # XXX What's this?
-
-	'd|download'	=> \$opts->{download},
-	'mp|mplayer'	=> \$opts->{mplayer},
-	'l|list|recent' => \$opts->{list},
-
-
-	'h|help'	=> \&usage,
-	'm|man'		=> sub { pod2usage(verbose => 3, exitval => 0) },
-	'v|version'	=> sub { say("$APP v", __PACKAGE__->VERSION) && exit },
+	'b|bitrate:i'   => \$opts->{bitrate},
+	'd|download'    => \$opts->{download},
+	'h|help'        => \&usage,
+	'v|version'     => sub { say("$APP v", __PACKAGE__->VERSION) && exit },
 );
 
 
-# XXX
-my %svt_feeds = (
-	rapport	=> '96238?vformat=flv&tag=playrapport',
-	kultur	=> '103478?expression=full&mode=plain',
-	recent	=> '96238?expression=full&mode=plain',
-);
+my $data = _get( shift );
 
-my $data;
-if($opts->{list}) {
-	my $recent = recent();
-	$data = _get( $recent->{url} );
-}
-else {
-	$data = _get( shift );
-}
-
-
-if($opts->{download}) {
-	download( $data->{url} );
-	exit;
-}
-elsif($opts->{mplayer}) {
-	mplayer( $data->{url } );
-	exit;
-}
-
-else {
-	say $data->{bitrate};
-	say $data->{url};
-	exit;
-}
-
-usage();
-
-
-my @map_elems;
-sub _get {
-	my $uri  = shift;
-	my $html =  get($uri) or die("Could not GET $uri: $!\n");
-	my($flash_vars) = $html =~ m{<param name="flashvars" value="([^"]*)"};
-	my ($urlmap) = $flash_vars =~ /dynamicStreams=(.*?)&amp;/;
-	@map_elems = split /\|/, $urlmap;
-
-	my %h = ();
-	for my $e( map{ split(/,/, $_) } @map_elems ) {
-		my($k, $v) = $e =~ m{ (\w+):(.+) }x;
-		$h{$k} = $v;
+if($opts->{bitrate}) {
+	if($opts->{download}) {
+		download( $data->{$opts->{bitrate}} );
+	} else {
+		say $data->{$opts->{bitrate}};
 	}
+} else {
+	if($opts->{download}) {
+		say "W: You have to do specify a bitrate";
+	}
+
+	foreach(keys %{$data}) {
+		say "$_: $data->{$_}";
+	}
+}
+
+exit 0;
+
+sub _get {
+	my $uri = shift;
+
+	my $html = get($uri) or die("Could not GET $uri: $!\n");
+
+	my($flash_vars) = $html =~ /<param name="flashvars" value="([^"]*)"/;
+	my ($urlmap) = $flash_vars =~ /dynamicStreams=(.*?)&amp;/;
+	
+	my %h;
+	for my $elm (split /\|/, $urlmap) {
+		my %fmt;
+
+		for my $e (split(/,/, $elm, 2)) {
+			my($k, $v) = $e =~ / (\w+):(.+) /x;
+			$fmt{$k} = $v;
+		}
+
+		$h{$fmt{bitrate}} = $fmt{url};
+	}
+
 	return \%h;
 }
-
-sub recent {
-	my $base = 'http://feeds.svtplay.se/v1/video/list/';
-	my $feed = shift;
-	$feed //= $base . $svt_feeds{recent};
-
-	my $programs = XMLin( get($feed) );
-
-	my($i, %shows) = (1, ());
-	for my $p(@{$programs->{channel}->{item}}) {
-		$shows{$i} = $p->{link};
-		printf("% 3d => %s\n", $i, $p->{title});
-		$i++;
-	}
-	my $choice;
-	ANSWER:
-	{
-		print "\n> ";
-		chomp( $choice = <STDIN> );
-		if($choice !~ /^[0-9]+$/) {
-			warn("Not a number: '$choice'\n");
-			goto ANSWER;
-		}
-		if( (( $choice +1 ) > $i) || ($choice < 1) ) {
-			print "I IS $i\n\n";
-			warn("Number 1 .. $i expected\n");
-			goto ANSWER;
-		}
-						 # for now
-		return { url => $shows{$choice}, bitrate => 0, }
-	}
-}
-
 
 sub download {
 	my $url = shift;
 	my $filename = time() . '.mp4';
 	if($url =~ m{.+/(.+)mp4-[a-f]-v[1-9]}) {
-		# skavlan5var20.mp4
 		$filename = lc($1);
 		$filename =~ s!^[A-Z]+-[0-9]{2,}-[0-9]{2,}(?:[A-Z]+)?-!!i;
-	}
-	else {
+	} else {
 		$filename = $url =~ m{/(.+)$};
 	}
 	$filename =~ s{-+$}{};
@@ -158,12 +95,6 @@ sub download {
 	print "using filename $filename\n\n";
 	system('rtmpdump', '-r', $url, '-o', $filename) == 0
 		or die("rtmpdump: $!\n");
-}
-
-sub mplayer {
-	my $url = shift;
-	system('rtmpdump', '-r', $url, '|', 'mplayer', '-cache', 400) == 0
-		or die($!);
 }
 
 __END__
@@ -176,25 +107,20 @@ svtplay - extract RTMP URLs from svtplay.se
 
 =head1 DESCRIPTION
 
-svtplay is a script that lets you extract RTMP URLs from  SVT Play.You can feed
-this URL to e.g. rtmpdump and extract the video. Note, C<--subtitle> isn't
-implemented yet.
+svtplay is a script that lets you extract RTMP URLs from SVT Play.
+You can feed this URL to e.g. rtmpdump and extract the video. 
 
 =head1 SYNOPSIS
 
-	svtplay [OPTION]... [URL]...
+  svtplay [OPTIONS] <URL>
 
 =head1 OPTIONS
 
-  -d,	--download	download video to ./
-  -mp,	--mplayer	play video using mplayer
-  -l,	--list		pick a video from the most recent ones
-  -b,	--bitrate	choose bitrate?
-  -s,	--subtitle	choose subtitle?
+  -d, --download   download video to ./
+  -b, --bitrate    choose bitrate. only list available bitrates if omitted
 
-  -h,	--help		show the help and exit
-  -v,	--version	show version info and exit
-  -m,	--man		show the manual and exit
+  -h, --help       show the help and exit
+  -v, --version    show version info and exit
 
 =head1 SEE ALSO
 
@@ -202,21 +128,15 @@ L<https://github.com/trapd00r/utils/blob/master/svtplay>
 
 =head1 AUTHOR
 
-Olof 'zibri' Johansson
+Olof 'zibri' Johansson, <olof@ethup.se>
 
 =head1 CONTRIBUTORS
 
-    \ \ | / /
-     \ \ - /
-      \ | /
-      (O O)
-      ( < )
-      (-=-)
+=over
 
-  Magnus Woldrich
-  CPAN ID: WOLDRICH
-  magnus@trapd00r.se
-  http://japh.se
+=item Magnus Woldrich, magnus@trapd00r.se, http://japh.se, trapd00r on github
+
+=back
 
 =head1 COPYRIGHT
 
@@ -227,3 +147,4 @@ above.
 
 This application is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
+
