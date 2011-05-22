@@ -10,15 +10,19 @@ use strict;
 use LWP::UserAgent;
 use Irssi;
 
-my $VERSION = '0.4';
+my $VERSION = '0.5';
 my %IRSSI = (
-    authors     => 'Olof \'zibri\' Johansson',
-    contact     => 'olof@ethup.se',
-    name        => 'tinyurl-resolver',
-    description => 'resolve tinyurl, et al',
-    license     => 'GNU APL',
+	authors     => "Olof 'zibri' Johansson",
+	contact     => 'olof@ethup.se',
+	name        => 'tinyurl-resolver',
+	description => 'Make long URI of tinyurl (et al) links (i.e. resolve)',
+	license     => 'GNU APL',
 );
 
+# 2011-05-22, 0.5:
+# * Rewrote to use LWP::UserAgent instead of sockets
+# * Case insensitive matching on URL
+# * Added wth.se
 # 2011-02-13, 0.4:
 # * added support for multiple url shortening services
 # * changed license to GNU APL
@@ -27,6 +31,9 @@ my %IRSSI = (
 # See also:
 # * http://www.stdlib.se/
 # * https://github.com/olof/hacks/tree/master/irssi
+
+# Known bugs: sometimes, URL encoded things become irssi 
+#             color codes.
 
 my $debug = 1;
 my $prefix = qr,(?:http://(?:www\.)?|www\.),;
