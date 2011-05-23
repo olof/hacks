@@ -7,13 +7,13 @@
 # without any warranty.
 
 use strict;
+use Irssi;
 use LWP::UserAgent;
 use XML::Simple;
 use HTML::Entities;
 use URI;
 use URI::QueryParam;
 use Regexp::Common qw/URI/;
-use Irssi;
 
 my $VERSION = '0.4';
 
@@ -21,12 +21,12 @@ my $VERSION = '0.4';
 # 0.4, 2011-05-22:
 #       * Also print out duration of video
 #       * Broke out output code to subroutines
-#       * sub f {print "Now using $m instead of $o"}
-#         - f("LWP::UserAgent", "own sockets")
-#         - f("XML::Simple", "regexp")
-#         - f("HTML::Entities", "regexp")
-#         - f("Regexp::Common::URI::http", "regexp");
-#         - f("URI", "regexp")
+#       * Respect $PROXY envs
+#       * Generally replaced hacks with available modules
+#         - Replaced IO::Socket::INET with LWP::UserAgent
+#         - Replaced regexp for XML parsing with XML::Simple
+#         - Replaced regexp for HTML entity decoding with HTML::Entities
+#         - Replaced URI parsing with regexp with URI.pm and Regexp::Common
 # 0.32, 2010-06-05:
 #	* added license header
 #	* updated contact info
@@ -84,9 +84,7 @@ sub print_title {
 
 sub get_ids {
 	my $msg = shift;
-
 	my $re_uri = qr#$RE{URI}{HTTP}{-scheme=>'https?'}#;
-
 	my @ids;
 
 	foreach($msg =~ /$re_uri/g) {
@@ -112,7 +110,7 @@ sub yttitle {
 	foreach my $id (get_ids($msg)) {
 		my $yt = get_title($id);
 			
-		if(! exists $yt->{title}) {
+		if(exists $yt->{error}) {
 			print_error($server, $target, $yt->{error});
 		} else {
 			print_title(
@@ -130,10 +128,7 @@ sub get_title {
 	print $vid;
 	my $url = "http://gdata.youtube.com/feeds/api/videos/$vid";
 	
-	my $ua = LWP::UserAgent->new(
-		max_redirect => 0,
-	);
-
+	my $ua = LWP::UserAgent->new();
 	$ua->agent("$IRSSI{name}/$VERSION (irssi)");
 	$ua->timeout(3);
 	$ua->env_proxy;
