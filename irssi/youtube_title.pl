@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright 2009, 2010, Olof Johansson <olof@ethup.se>
+# Copyright 2009 -- 2011, Olof Johansson <olof@ethup.se>
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -7,12 +7,26 @@
 # without any warranty.
 
 use strict;
-use IO::Socket::INET;
+use LWP::UserAgent;
+use XML::Simple;
+use HTML::Entities;
+use URI;
+use URI::QueryParam;
+use Regexp::Common qw/URI/;
 use Irssi;
 
-my $VERSION = '0.32';
+my $VERSION = '0.4';
 
 # changelog:
+# 0.4, 2011-05-22:
+#       * Also print out duration of video
+#       * Broke out output code to subroutines
+#       * sub f {print "Now using $m instead of $o"}
+#         - f("LWP::UserAgent", "own sockets")
+#         - f("XML::Simple", "regexp")
+#         - f("HTML::Entities", "regexp")
+#         - f("Regexp::Common::URI::http", "regexp");
+#         - f("URI", "regexp")
 # 0.32, 2010-06-05:
 #	* added license header
 #	* updated contact info
@@ -42,43 +56,69 @@ my $VERSION = '0.32';
 #         characters.
 
 my %IRSSI = (
-    authors     => 'Olof \'zibri\' Johansson',
-    contact     => 'olof@ethup.se',
-    name        => 'youtube-title',
-    description => 'prints the title of a youtube video automatically',
-    license     => 'GNU APL',
+	authors     => 'Olof \'zibri\' Johansson',
+	contact     => 'olof@ethup.se',
+	name        => 'youtube-title',
+	description => 'prints the title of a youtube video automatically',
+	license     => 'GNU APL',
 );
 
 my $debug = 0;
 
+sub print_error {
+	my ($server, $target, $msg) = @_;
+	$server->window_item_find($target)->
+		print("%rError fetching youtube title:%n $msg",
+		      MSGLEVEL_CLIENTCRAP);
+}
+
+sub print_title {
+	my ($server, $target, $title, $d) = @_;
+
+	$title = decode_entities($title);
+	$d = decode_entities($d);
+
+	$server->window_item_find($target)->
+		print("%yyoutube:%n $title ($d)", MSGLEVEL_CLIENTCRAP);
+}
+
+sub get_ids {
+	my $msg = shift;
+
+	my $re_uri = qr#$RE{URI}{HTTP}{-scheme=>'https?'}#;
+
+	my @ids;
+
+	foreach($msg =~ /$re_uri/g) {
+		my $uri = URI->new($_);
+
+		next unless $uri->host =~ /^(?:www\.)?youtube\.com$/;
+		next unless $uri->path eq '/watch';
+		next unless my $id = $uri->query_param('v');
+
+		push @ids, $id;
+	}
+
+	return @ids;
+}
+
 #does the message contain youtube.com/watch?v=<video id>?
-sub isutube {
+sub yttitle {
 	my($server, $msg, $nick, $address, $target) = @_;
 	$target=$nick if $target eq undef;
-	
+
 	# for each link to youtube.com/watch?v=... print the title
-	# example: http://www.youtube.com/watch?v=59FCAYKyR00
-	while($msg=~ m"
-		(?:http://|www\.|http://www\.)youtube\.com/
-		watch\?\S*v=([^\s&\?\.,!]+)
-	"x) {
-		my $title = get_title($1) if($1 ne undef);
-		
-		if($title ne undef) {
-			# Decode html entities. If more are needed - i.e 
-			# are shown as &foo; when printed in irssi - send 
-			# me a mail at olof@ethup.se
-			$title =~ s/&amp;/&/;
-			$title =~ s/&lt;/</;
-			$title =~ s/&gt;/>/;
-
-			$server->window_item_find($target)->
-				print("%yyoutube:%n $title", 
-				MSGLEVEL_CLIENTCRAP);
+	# example: http://www.youtube.com/watch?v=pLFXGiT_GrA
+	foreach my $id (get_ids($msg)) {
+		my $yt = get_title($id);
+			
+		if(! exists $yt->{title}) {
+			print_error($server, $target, $yt->{error});
+		} else {
+			print_title(
+				$server, $target, $yt->{title}, $yt->{duration}
+			);
 		}
-
-		$msg =~ s"(?:http://|www\.|http://www\.)youtube\.com/
-		          watch\?\S*v=[^\s&\?\.,!]+""x;
 	}
 }
 
@@ -86,29 +126,44 @@ sub isutube {
 # http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
 sub get_title {
 	my($vid)=@_;
+
+	print $vid;
+	my $url = "http://gdata.youtube.com/feeds/api/videos/$vid";
 	
-	my $sock = IO::Socket::INET->new( 
-		PeerAddr=>'gdata.youtube.com',
-		PeerPort=>'http(80)',
-		Proto=>'tcp',
+	my $ua = LWP::UserAgent->new(
+		max_redirect => 0,
 	);
-	
-	my $req="GET /feeds/api/videos/$vid HTTP/1.0\r\n";
-	$req.="host: gdata.youtube.com\r\n";
-	$req.="user-agent: $IRSSI{'name'}-$VERSION (irssi script)\r\n";
-	$req.="\r\n";
-	
-	print $sock $req;
-	while(<$sock>) {
-		if(/<media:title type='plain'>(.*)<\/media:title>/) {
-			close $sock;
-			return $1;
+
+	$ua->agent("$IRSSI{name}/$VERSION (irssi)");
+	$ua->timeout(3);
+	$ua->env_proxy;
+
+	my $response = $ua->get($url);
+
+	if($response->code == 200) {
+		my $content = $response->decoded_content;
+
+		my $xml = XMLin($content)->{'media:group'};
+		my $title = $xml->{'media:title'}->{content};
+		my $s = $xml->{'yt:duration'}->{seconds};
+
+		my $m = $s / 60;
+		   $s = $s % 60;
+		my $d = sprintf "%d:%02d", $m, $s;
+
+		if($title) {
+			return {
+				title => $title,
+				duration => $d,
+			};
 		}
+
+		return {error => 'could not find title'};
 	}
 	
-	return undef;
+	return {error => $response->message};
 }
 
-Irssi::signal_add("message public", \&isutube);
-Irssi::signal_add("message private", \&isutube);
+Irssi::signal_add("message public", \&yttile);
+Irssi::signal_add("message private", \&yttitle);
 
