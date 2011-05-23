@@ -10,7 +10,7 @@ use strict;
 use LWP::UserAgent;
 use Irssi;
 
-my $VERSION = '0.5';
+my $VERSION = '0.51';
 my %IRSSI = (
 	authors     => "Olof 'zibri' Johansson",
 	contact     => 'olof@ethup.se',
@@ -19,6 +19,8 @@ my %IRSSI = (
 	license     => 'GNU APL',
 );
 
+# 2011-05-23, 0.51:
+# * Fixed the irssi color code bug
 # 2011-05-22, 0.5:
 # * Rewrote to use LWP::UserAgent instead of sockets
 # * Case insensitive matching on URL
@@ -31,9 +33,6 @@ my %IRSSI = (
 # See also:
 # * http://www.stdlib.se/
 # * https://github.com/olof/hacks/tree/master/irssi
-
-# Known bugs: sometimes, URL encoded things become irssi 
-#             color codes.
 
 my $debug = 1;
 my $prefix = qr,(?:http://(?:www\.)?|www\.),;
@@ -72,6 +71,9 @@ sub resolve {
 
 	while(my $url = hastiny($msg)) {
 		my $loc = get_location($url);
+
+		$url =~ s/%/%%/g;
+		$loc =~ s/%/%%/g;
 		
 		if($loc) {
 			$server->window_item_find($target)->print(
