@@ -18,7 +18,7 @@ use Regexp::Common qw/URI/;
 my $VERSION = '0.4';
 
 # changelog:
-# 0.4, 2011-05-22:
+# 0.4, 2011-05-23:
 #       * Also print out duration of video
 #       * Broke out output code to subroutines
 #       * Respect $PROXY envs
