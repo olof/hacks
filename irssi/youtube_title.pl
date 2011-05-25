@@ -159,6 +159,6 @@ sub get_title {
 	return {error => $response->message};
 }
 
-Irssi::signal_add("message public", \&yttile);
+Irssi::signal_add("message public", \&yttitle);
 Irssi::signal_add("message private", \&yttitle);
 
