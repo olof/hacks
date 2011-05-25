@@ -125,7 +125,6 @@ sub yttitle {
 sub get_title {
 	my($vid)=@_;
 
-	print $vid;
 	my $url = "http://gdata.youtube.com/feeds/api/videos/$vid";
 	
 	my $ua = LWP::UserAgent->new();
