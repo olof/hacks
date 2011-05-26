@@ -1,5 +1,4 @@
-/* bfuck version 0.2, 20090210, a brainfuck interpreter */
-/* Copyright (c) 2009, Olof Johansson <olof@ethup.se>
+/* Copyright (c) 2009, 2011, Olof Johansson <olof@ethup.se>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -58,11 +57,6 @@ int main(int argc, char *argv[])
 
 	int l=0;
 
-	#ifdef DEBUG
-	printf("%d\n", getpid());
-	getchar();
-	#endif
-
 	if(argc!=2) {
 		printf("USAGE: %s <file>\n", argv[0]);
 		exit(1);
@@ -88,12 +82,11 @@ int main(int argc, char *argv[])
 	fclose(fp);
 	msize=mem_used(fbuf_0, st.st_size);
 	bbuf=bbuf_0=calloc(msize, 1);
-	printf("%d\n", st.st_size);
+
 	if(!bbuf) {
 		perror("calloc");
 		exit(2);
 	}
-
 
 	while(fbuf<fbuf_0+st.st_size) {
 		switch(*fbuf) {
