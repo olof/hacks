@@ -15,9 +15,12 @@ use URI;
 use URI::QueryParam;
 use Regexp::Common qw/URI/;
 
-my $VERSION = '0.4';
+my $VERSION = '0.5';
 
 # changelog:
+# 0.5, 2011-06-02:
+#       * Optionally print info of own Youtube links (defaults to off)
+#         (see setting "yt_print_own").
 # 0.4, 2011-05-23:
 #       * Also print out duration of video
 #       * Broke out output code to subroutines
@@ -62,6 +65,8 @@ my %IRSSI = (
 	description => 'prints the title of a youtube video automatically',
 	license     => 'GNU APL',
 );
+
+Irssi::settings_add_bool('youtube_title', 'yt_print_own', 0);
 
 my $debug = 0;
 
@@ -120,6 +125,14 @@ sub yttitle {
 	}
 }
 
+sub own_yttitle {
+	my($server, $msg, $target) = @_;
+
+	yttitle(
+		$server, $msg, undef, undef, $target
+	) if Irssi::settings_get_bool('yt_print_own');
+}
+
 # extract title using youtube api
 # http://code.google.com/apis/youtube/2.0/developers_guide_protocol.html
 sub get_title {
@@ -160,4 +173,7 @@ sub get_title {
 
 Irssi::signal_add("message public", \&yttitle);
 Irssi::signal_add("message private", \&yttitle);
+
+Irssi::signal_add("message own_public", \&own_yttitle);
+Irssi::signal_add("message own_private", \&own_yttitle);
 
