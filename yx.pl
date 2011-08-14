@@ -69,6 +69,7 @@ my $uri = $map{$itag}->{url};
 exec("mplayer -fs '$uri'") if $opts->{stream};
 
 my $fname = get_filename($map{$itag}, \$html);
+die("$fname already exists in .") if -e $fname;
 print "Downloading to $fname\n";
 exec("curl -Lo $fname '$uri'\n") if $opts->{curl};
 exec("wget -O $fname '$uri'") if $opts->{wget};
