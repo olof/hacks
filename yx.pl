@@ -37,7 +37,16 @@ sub get_filename {
 
 my @pref = qw/45 44 43 18/;
 my $opts = {};
-GetOptions($opts, 'itag=i', 'stream', 'download', 'curl', 'wget',  'dumper|D');
+GetOptions($opts, 
+	'itag=i', 
+	'stream', 
+	'out',
+	'download|d', 
+	'curl', 
+	'wget',  
+	'dumper|D'
+);
+
 $opts->{curl} = 1 if $opts->{download};
 $opts->{stream} = 1 unless $opts->{curl} || $opts->{wget};
 
@@ -68,7 +77,7 @@ die("couldn't find uri...") unless $itag;
 my $uri = $map{$itag}->{url};
 exec("mplayer -fs '$uri'") if $opts->{stream};
 
-my $fname = get_filename($map{$itag}, \$html);
+my $fname = $opts->{out} // get_filename($map{$itag}, \$html);
 die("$fname already exists in .") if -e $fname;
 print "Downloading to $fname\n";
 exec("curl -Lo $fname '$uri'\n") if $opts->{curl};
