@@ -12,7 +12,7 @@
 # provided the copyright notice are preserved. This file is 
 # offered as-is, without any warranty.
 
-our $VERSION = 3.1415;
+our $VERSION = 3.14159;
 use warnings;
 use strict;
 use LWP::Simple qw/get/;
@@ -40,11 +40,11 @@ my $opts = {};
 GetOptions($opts, 
 	'itag=i', 
 	'stream', 
-	'out',
+	'out=s',
 	'download|d', 
 	'curl', 
 	'wget',  
-	'dumper|D'
+	'dumper'
 );
 
 $opts->{curl} = 1 if $opts->{download};
