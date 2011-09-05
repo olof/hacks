@@ -15,9 +15,11 @@ use URI;
 use URI::QueryParam;
 use Regexp::Common qw/URI/;
 
-my $VERSION = '0.5';
+my $VERSION = '0.51';
 
 # changelog:
+# 0.51, 2011-09-05:
+#       * Bugfix release: "<url>," will fail (note the , character)
 # 0.5, 2011-06-02:
 #       * Optionally print info of own Youtube links (defaults to off)
 #         (see setting "yt_print_own").
@@ -99,6 +101,7 @@ sub get_ids {
 		next unless $uri->path eq '/watch';
 		next unless my $id = $uri->query_param('v');
 
+		$id =~ s/[!,.;:].*//; # chars "known" not be in v= ids
 		push @ids, $id;
 	}
 
