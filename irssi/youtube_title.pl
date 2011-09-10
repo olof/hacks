@@ -106,23 +106,22 @@ sub get_ids {
 	return @ids;
 }
 
-#does the message contain youtube.com/watch?v=<video id>?
 sub callback {
 	my($server, $msg, $nick, $address, $target) = @_;
 	$target=$nick if $target eq undef;
 
-	# for each link to youtube.com/watch?v=... print the title
-	# example: http://www.youtube.com/watch?v=pLFXGiT_GrA
-	foreach my $id (get_ids($msg)) {
-		my $yt = get_title($id);
-			
-		if(exists $yt->{error}) {
-			print_error($server, $target, $yt->{error});
-		} else {
-			print_title(
-				$server, $target, $yt->{title}, $yt->{duration}
-			);
-		}
+	# process each youtube link in message
+	process($server, $target, $_) for (get_ids($msg)); 
+}
+
+sub process {
+	my ($server, $target, $id) = @_;
+	my $yt = get_title($id);
+		
+	if(exists $yt->{error}) {
+		print_error($server, $target, $yt->{error});
+	} else {
+		print_title($server, $target, $yt->{title}, $yt->{duration});
 	}
 }
 
