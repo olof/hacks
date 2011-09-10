@@ -70,21 +70,31 @@ my %IRSSI = (
 
 Irssi::settings_add_bool('youtube_title', 'yt_print_own', 0);
 
-sub print_error {
-	my ($server, $target, $msg) = @_;
-	$server->window_item_find($target)->
-		print("%rError fetching youtube title:%n $msg",
-		      MSGLEVEL_CLIENTCRAP);
+sub callback {
+	my($server, $msg, $nick, $address, $target) = @_;
+	$target=$nick if $target eq undef;
+
+	# process each youtube link in message
+	process($server, $target, $_) for (get_ids($msg)); 
 }
 
-sub print_title {
-	my ($server, $target, $title, $d) = @_;
+sub own_callback {
+	my($server, $msg, $target) = @_;
 
-	$title = decode_entities($title);
-	$d = decode_entities($d);
+	callback(
+		$server, $msg, undef, undef, $target
+	) if Irssi::settings_get_bool('yt_print_own');
+}
 
-	$server->window_item_find($target)->
-		print("%yyoutube:%n $title ($d)", MSGLEVEL_CLIENTCRAP);
+sub process {
+	my ($server, $target, $id) = @_;
+	my $yt = get_title($id);
+		
+	if(exists $yt->{error}) {
+		print_error($server, $target, $yt->{error});
+	} else {
+		print_title($server, $target, $yt->{title}, $yt->{duration});
+	}
 }
 
 sub get_ids {
@@ -104,33 +114,6 @@ sub get_ids {
 	}
 
 	return @ids;
-}
-
-sub callback {
-	my($server, $msg, $nick, $address, $target) = @_;
-	$target=$nick if $target eq undef;
-
-	# process each youtube link in message
-	process($server, $target, $_) for (get_ids($msg)); 
-}
-
-sub process {
-	my ($server, $target, $id) = @_;
-	my $yt = get_title($id);
-		
-	if(exists $yt->{error}) {
-		print_error($server, $target, $yt->{error});
-	} else {
-		print_title($server, $target, $yt->{title}, $yt->{duration});
-	}
-}
-
-sub own_callback {
-	my($server, $msg, $target) = @_;
-
-	callback(
-		$server, $msg, undef, undef, $target
-	) if Irssi::settings_get_bool('yt_print_own');
 }
 
 # extract title using youtube api
@@ -169,6 +152,23 @@ sub get_title {
 	}
 	
 	return {error => $response->message};
+}
+
+sub print_error {
+	my ($server, $target, $msg) = @_;
+	$server->window_item_find($target)->
+		print("%rError fetching youtube title:%n $msg",
+		      MSGLEVEL_CLIENTCRAP);
+}
+
+sub print_title {
+	my ($server, $target, $title, $d) = @_;
+
+	$title = decode_entities($title);
+	$d = decode_entities($d);
+
+	$server->window_item_find($target)->
+		print("%yyoutube:%n $title ($d)", MSGLEVEL_CLIENTCRAP);
 }
 
 Irssi::signal_add("message public", \&callback);
