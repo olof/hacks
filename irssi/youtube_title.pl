@@ -81,9 +81,9 @@ sub callback {
 sub own_callback {
 	my($server, $msg, $target) = @_;
 
-	callback(
-		$server, $msg, undef, undef, $target
-	) if Irssi::settings_get_bool('yt_print_own');
+	if(Irssi::settings_get_bool('yt_print_own')) { 
+		callback($server, $msg, undef, undef, $target);
+	}
 }
 
 sub process {
@@ -138,8 +138,7 @@ sub get_title {
 		my $s = $xml->{'yt:duration'}->{seconds};
 
 		my $m = $s / 60;
-		   $s = $s % 60;
-		my $d = sprintf "%d:%02d", $m, $s;
+		my $d = sprintf "%d:%02d", $m, $s % 60;
 
 		if($title) {
 			return {
@@ -156,9 +155,9 @@ sub get_title {
 
 sub print_error {
 	my ($server, $target, $msg) = @_;
-	$server->window_item_find($target)->
-		print("%rError fetching youtube title:%n $msg",
-		      MSGLEVEL_CLIENTCRAP);
+	$server->window_item_find($target)->print(
+		"%rError fetching youtube title:%n $msg", MSGLEVEL_CLIENTCRAP
+	);
 }
 
 sub print_title {
@@ -167,8 +166,9 @@ sub print_title {
 	$title = decode_entities($title);
 	$d = decode_entities($d);
 
-	$server->window_item_find($target)->
-		print("%yyoutube:%n $title ($d)", MSGLEVEL_CLIENTCRAP);
+	$server->window_item_find($target)->print(
+		"%yyoutube:%n $title ($d)", MSGLEVEL_CLIENTCRAP
+	);
 }
 
 Irssi::signal_add("message public", \&callback);
