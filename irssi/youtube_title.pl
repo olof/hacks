@@ -109,7 +109,7 @@ sub get_ids {
 }
 
 #does the message contain youtube.com/watch?v=<video id>?
-sub yttitle {
+sub callback {
 	my($server, $msg, $nick, $address, $target) = @_;
 	$target=$nick if $target eq undef;
 
@@ -128,10 +128,10 @@ sub yttitle {
 	}
 }
 
-sub own_yttitle {
+sub own_callback {
 	my($server, $msg, $target) = @_;
 
-	yttitle(
+	callback(
 		$server, $msg, undef, undef, $target
 	) if Irssi::settings_get_bool('yt_print_own');
 }
@@ -174,9 +174,9 @@ sub get_title {
 	return {error => $response->message};
 }
 
-Irssi::signal_add("message public", \&yttitle);
-Irssi::signal_add("message private", \&yttitle);
+Irssi::signal_add("message public", \&callback);
+Irssi::signal_add("message private", \&callback);
 
-Irssi::signal_add("message own_public", \&own_yttitle);
-Irssi::signal_add("message own_private", \&own_yttitle);
+Irssi::signal_add("message own_public", \&own_callback);
+Irssi::signal_add("message own_private", \&own_callback);
 
