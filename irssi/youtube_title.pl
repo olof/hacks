@@ -15,9 +15,11 @@ use URI;
 use URI::QueryParam;
 use Regexp::Common qw/URI/;
 
-my $VERSION = '0.51';
+my $VERSION = '0.52';
 
 # changelog:
+# 0.52, 2011-09-10:
+#   * Refactoring: changed name of callback subs; rearranged stuff
 # 0.51, 2011-09-05:
 #   * Bugfix release: "<url>," will fail (note the , character)
 # 0.5, 2011-06-02:
