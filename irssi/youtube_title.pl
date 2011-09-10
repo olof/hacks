@@ -70,8 +70,6 @@ my %IRSSI = (
 
 Irssi::settings_add_bool('youtube_title', 'yt_print_own', 0);
 
-my $debug = 0;
-
 sub print_error {
 	my ($server, $target, $msg) = @_;
 	$server->window_item_find($target)->
