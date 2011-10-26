@@ -36,6 +36,7 @@ my $opts = {
 GetOptions($opts,
 	'bitrate|b:i',
 	'download|d',
+	'force|f',
 	'help|h',
 	'version|v',
 );
@@ -94,6 +95,7 @@ sub download {
 	}
 	$filename =~ s{-+$}{};
 	$filename .= '.mp4'; # no consistency from svt, fuck it
+	unlink $filename if -e $filename && $opts->{force};
 	print "using filename $filename\n\n";
 	system('rtmpdump', '-r', $url, '-o', $filename) == 0
 		or die("rtmpdump: $!\n");
