@@ -36,6 +36,7 @@ my $opts = {
 GetOptions($opts,
 	'bitrate|b:i',
 	'download|d',
+	'output|o',
 	'force|f',
 	'help|h',
 	'version|v',
@@ -84,17 +85,31 @@ sub _get {
 	return \%h;
 }
 
+sub get_filename {
+	my $url = shift;
+
+	return $opts->{output} if $opts->{output};
+
+	# originally implemented by woldrich.. not really sure
+	# what it does, but to hell with it... it works.
+	my $filename;
+	if($url =~ m;.+/(.+)mp4-[a-f]-v[1-9];) {
+		$filename = lc $1;
+		$filename =~ s/^[A-Z]+-[0-9]{2,}-[0-9]{2,}(?:[A-Z]+)?-//i;
+	} else {
+		$filename = $url =~ m;/(.+);;
+	}
+
+	$filename =~ s/-+$//;
+	$filename .= '.mp4'; # no consistency from svt, fuck it
+
+	return $filename;
+}
+
 sub download {
 	my $url = shift;
-	my $filename = time() . '.mp4';
-	if($url =~ m{.+/(.+)mp4-[a-f]-v[1-9]}) {
-		$filename = lc($1);
-		$filename =~ s!^[A-Z]+-[0-9]{2,}-[0-9]{2,}(?:[A-Z]+)?-!!i;
-	} else {
-		$filename = $url =~ m{/(.+)$};
-	}
-	$filename =~ s{-+$}{};
-	$filename .= '.mp4'; # no consistency from svt, fuck it
+
+	my $filename = get_filename($url);
 	unlink $filename if -e $filename && $opts->{force};
 	print "using filename $filename\n\n";
 	system('rtmpdump', '-r', $url, '-o', $filename) == 0
