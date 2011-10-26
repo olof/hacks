@@ -112,8 +112,7 @@ sub download {
 	my $filename = get_filename($url);
 	unlink $filename if -e $filename && $opts->{force};
 	print "using filename $filename\n\n";
-	system('rtmpdump', '-r', $url, '-o', $filename) == 0
-		or die("rtmpdump: $!\n");
+	exec("rtmpdump -r $url -o $filename");
 }
 
 __END__
