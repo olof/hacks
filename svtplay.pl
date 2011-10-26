@@ -37,7 +37,7 @@ GetOptions($opts,
 	'bitrate|b:i',
 	'download|d',
 	'output|o=s',
-	'force|f',
+#	'force|f', # is this needed?
 	'help|h',
 	'version|v',
 );
@@ -110,7 +110,7 @@ sub download {
 	my $url = shift;
 
 	my $filename = get_filename($url);
-	unlink $filename if -e $filename && $opts->{force};
+	#unlink $filename if -e $filename and $opts->{force};
 	print "using filename $filename\n\n";
 	exec("rtmpdump -r $url -o $filename");
 }
