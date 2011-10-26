@@ -126,7 +126,8 @@ svtplay - extract RTMP URLs from svtplay.se
 =head1 DESCRIPTION
 
 svtplay is a script that lets you extract RTMP URLs from SVT Play.
-You can feed this URL to e.g. rtmpdump and extract the video. 
+You can feed this URL to e.g. rtmpdump and extract the video using
+options to the script.
 
 =head1 SYNOPSIS
 
@@ -134,15 +135,12 @@ You can feed this URL to e.g. rtmpdump and extract the video.
 
 =head1 OPTIONS
 
-  -d, --download   download video to ./
-  -b, --bitrate    choose bitrate. only list available bitrates if omitted
+  -d, --download     download video
+  -b, --bitrate      choose bitrate. only list available bitrates if omitted
+  -o, --output file  specify output filename
 
-  -h, --help       show the help and exit
-  -v, --version    show version info and exit
-
-=head1 SEE ALSO
-
-L<https://github.com/trapd00r/utils/blob/master/svtplay>
+  -h, --help         show the help and exit
+  -v, --version      show version info and exit
 
 =head1 AUTHOR
 
