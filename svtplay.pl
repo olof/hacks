@@ -15,7 +15,7 @@ use strict;
 use feature qw/say/;
 use XML::Simple qw/XMLin/;
 use LWP::Simple qw/get/;
-use Getopt::Long;
+use Getopt::Long qw/:config gnu_getopt/;
 use Pod::Usage qw/pod2usage/;
 
 sub usage {
@@ -28,15 +28,17 @@ sub usage {
 
 usage() unless(@ARGV);
 
-my $opts;
-($opts->{bitrate}, $opts->{subtitle}, $opts->{list}) = (0, undef, undef);
-GetOptions(
-	'b|bitrate:i'   => \$opts->{bitrate},
-	'd|download'    => \$opts->{download},
-	'h|help'        => \&usage,
-	'v|version'     => sub { say("$APP v", __PACKAGE__->VERSION) && exit },
+my $opts = {
+	bitrate => 0,
+	help => \&usage,
+	version => sub { say("$APP v", __PACKAGE__->VERSION) && exit },
+};
+GetOptions($opts,
+	'bitrate|b:i',
+	'download|d',
+	'help|h',
+	'version|v',
 );
-
 
 my $data = _get( shift );
 
