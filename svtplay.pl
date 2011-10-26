@@ -36,7 +36,7 @@ my $opts = {
 GetOptions($opts,
 	'bitrate|b:i',
 	'download|d',
-	'output|o',
+	'output|o=s',
 	'force|f',
 	'help|h',
 	'version|v',
