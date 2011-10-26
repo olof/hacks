@@ -8,7 +8,7 @@
 # offered as-is, without any warranty.
 
 use vars qw($VERSION);
-$VERSION = '0.2';
+$VERSION = '0.2'; # don't trust this... use git sha1
 my $APP  = 'svtplay';
 
 use strict;
