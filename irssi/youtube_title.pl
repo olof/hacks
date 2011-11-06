@@ -18,6 +18,9 @@ use Regexp::Common qw/URI/;
 my $VERSION = '0.52';
 
 # changelog:
+# 0.53, 2011-11-06:
+#   * Support new domain hack "youtu.be"
+#   * Whitelist invalid characters instead of blacklisting
 # 0.52, 2011-09-10:
 #   * Refactoring: changed name of callback subs; rearranged stuff
 # 0.51, 2011-09-05:
