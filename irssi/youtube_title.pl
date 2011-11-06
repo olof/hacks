@@ -106,12 +106,16 @@ sub get_ids {
 
 	foreach($msg =~ /$re_uri/g) {
 		my $uri = URI->new($_);
+		my $id;
 
-		next unless $uri->host =~ /^(?:www\.)?youtube\.com$/;
-		next unless $uri->path eq '/watch';
-		next unless my $id = $uri->query_param('v');
+		if($uri->host =~ /^(?:www\.)?youtube\.com$/) {
+			next unless $uri->path eq '/watch';
+			next unless $id = $uri->query_param('v');
+		} elsif($uri->host =~ /^(?:www\.)?youtu\.be$/) {
+			next unless ($id) = $uri->path =~ m;/(.*);
+		}
 
-		$id =~ s/[!,.;:].*//; # chars "known" not be in v= ids
+		$id =~ s/[!,.;:].*//; # chars "known" not be in video ids
 		push @ids, $id;
 	}
 
