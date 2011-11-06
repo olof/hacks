@@ -115,7 +115,7 @@ sub get_ids {
 			next unless ($id) = $uri->path =~ m;/(.*);
 		}
 
-		$id =~ s/[!,.;:].*//; # chars "known" not be in video ids
+		$id =~ s/[^\w-].*//;
 		push @ids, $id;
 	}
 
