@@ -62,24 +62,6 @@ sub fname2rfcn {
 	return basename($fname) =~ /^rfc([0-9]+)\.txt$/;
 }
 
-my @rfcs =
-	sort { $a <=> $b }
-	map { fname2rfcn($_) }
-	grep /\/rfc[0-9]+\.txt$/,
-	glob("$opts->{src_base}/rfc*.txt");
-
-my @indexes;
-my $lim = 0;
-for my $i ( 0 .. int ( $rfcs[$#rfcs] / 100 ) ) {
-	my @rfc_slice;
-	$lim += 100;
-
-	push @rfc_slice, shift @rfcs while @rfcs and $rfcs[0] < $lim;
-	push @indexes, gen_slice_index(@rfc_slice);
-}
-
-gen_index(@indexes);
-
 sub gen_slice_index_base {
 	return int($_[0]/100) . 'xx';
 }
@@ -131,6 +113,24 @@ sub template {
 
 	return $tmpl;
 }
+
+my @rfcs =
+	sort { $a <=> $b }
+	map { fname2rfcn($_) }
+	grep /\/rfc[0-9]+\.txt$/,
+	glob("$opts->{src_base}/rfc*.txt");
+
+my @indexes;
+my $lim = 0;
+for my $i ( 0 .. int ( $rfcs[$#rfcs] / 100 ) ) {
+	my @rfc_slice;
+	$lim += 100;
+
+	push @rfc_slice, shift @rfcs while @rfcs and $rfcs[0] < $lim;
+	push @indexes, gen_slice_index(@rfc_slice);
+}
+
+gen_index(@indexes);
 
 __END__
 
