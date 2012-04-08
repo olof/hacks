@@ -3,7 +3,6 @@ use warnings;
 use strict;
 use feature qw/say/;
 use File::Basename qw/basename/;
-use Data::Dumper;
 
 # CONFIGURATION
 my $opts = {
@@ -85,7 +84,6 @@ sub gen_slice_index_base {
 	return int($_[0]/100) . 'xx';
 }
 
-my $lala = 0;
 sub gen_slice_index {
 	my $fnbase = gen_slice_index_base($_[0]);
 	open my $fh, '>', "index_$fnbase.html";
