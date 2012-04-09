@@ -164,7 +164,7 @@ recommended.
 
 One simple solution is to slice the index up to sub-indexes of 100
 RFCs each. This can easily be generated as static HTML on sync time,
-which I see as a hugh plus.
+which I see as a huge plus.
 
 And yes, this script is an ugly pretty hack, thank you, glad you
 noticed!
