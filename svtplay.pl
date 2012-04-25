@@ -142,10 +142,6 @@ options to the script.
   -h, --help         show the help and exit
   -v, --version      show version info and exit
 
-=head1 AUTHOR
-
-Olof 'zibri' Johansson, <olof@ethup.se>
-
 =head1 CONTRIBUTORS
 
 =over
@@ -156,11 +152,10 @@ Olof 'zibri' Johansson, <olof@ethup.se>
 
 =head1 COPYRIGHT
 
-Copyright 2011 the B<svtplay.pl> L</AUTHOR> and L</CONTRIBUTORS> as listed
-above.
+Copyright 2011, Olof Johansson <olof@ethup.se>
+(and contributors...)
 
-=head1 LICENSE
-
-This application is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
+Copying and distribution of this file, with or without
+modification, are permitted in any medium without royalty
+provided the copyright notice are preserved. This file is
+offered as-is, without any warranty.
