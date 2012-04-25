@@ -3,13 +3,12 @@
 [ "$PAGER" ] || PAGER=less
 
 uri_tmpl='http://www.rfc-editor.org/rfc/rfc%d.txt';
-rfcn=$( printf $1 | sed 's/[^0-9]//g' );
+rfcn=$( echo "$1" | sed 's/[^0-9]//g' );
 
 if [ -z "$rfcn" ]; then
 	echo  "Usage: rfc <RFC>";
-	exit;
+	exit 1;
 fi
 
 uri=$( printf $uri_tmpl $rfcn );
-
 curl --silent $uri | $PAGER;
