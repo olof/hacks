@@ -14,8 +14,8 @@ sub new {
 
 {
 	no warnings 'uninitialized';
-	sub inc { my ($s)=@_; $s->set($s->get + 1 % 0x100) }
-	sub dec { my ($s)=@_; $s->set(+($s->get - 1) % 0x100 }
+	sub inc { my ($s)=@_; $s->set(($s->get + 1) % 0x100) }
+	sub dec { my ($s)=@_; $s->set(+($s->get - 1) % 0x100) }
 }
 
 sub next { my ($s)=@_; ++$s->{bp}; }
