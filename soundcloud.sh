@@ -14,7 +14,7 @@ die() {
 }
 
 WEB=$1
-[ -n "$WEB" ] || die 'Need to supply a URL'
+[ -n "$WEB" ] || die 'Need to supply an URL'
 TITLE="${WEB##*/}"
 
 [ -n "$TITLE" ] || die "$WEB should not end with /"
