@@ -1,14 +1,78 @@
 #!/bin/sh
 
-[ "$PAGER" ] || PAGER=less
+URLFMT=http://www.rfc-editor.org/rfc/rfc%d.txt
 
-uri_tmpl='http://www.rfc-editor.org/rfc/rfc%d.txt';
-rfcn=$( echo "$1" | sed 's/[^0-9]//g' );
+carp() {
+	echo "Error:" "$@" >&2
+	exit 1
+}
 
-if [ -z "$rfcn" ]; then
-	echo  "Usage: rfc <RFC>";
-	exit 1;
+usage() {
+	[ $# -gt 0 ] && echo "Error: $@"
+
+	cat <<- EOF
+		USAGE:
+		   rfc <rfc number>
+		   rfc --draft <draft-name.txt>
+		   rfc --help
+	EOF
+
+	[ $# -eq 0 ]
+	exit
+}
+
+gen_uri() {
+	printf "$URLFMT" $1
+}
+
+get_pager() {
+	if [ -n "$PAGER" ]; then
+		echo "$PAGER"
+	elif type pager 2>&1 >/dev/null; then
+		echo pager
+	elif type less 2>&1 >/dev/null; then
+		echo less
+	elif type more 2>&1 >/dev/null; then
+		echo more
+	elif type cat 2>&1 >/dev/null; then
+		echo cat
+	fi
+}
+
+page() {
+	id=$1
+	pager=$(get_pager)
+
+	[ -n "$pager" ] || carp "Could not find a pager (or even cat)."
+	uri=$(gen_uri "$id")
+
+	curl --location --silent "$uri" | "$pager";
+}
+
+while [ $# -gt 0 ]; do
+	case $1 in
+		--draft|-d)
+			URLFMT=http://www.ietf.org/internet-drafts/%s
+			DRAFT=y
+			;;
+		--help|-h)
+			usage
+			;;
+		*)
+			rfc=$1
+			shift
+			break
+			;;
+	esac
+
+	shift
+done
+
+[ $# -eq 0 ] || carp "Trailing arguments"
+[ -n "$rfc" ] || usage
+
+if [ "$DRAFT" != y ]; then
+	rfc=$( echo "$rfc" | sed 's/[^0-9]//g' );
 fi
 
-uri=$( printf $uri_tmpl $rfcn );
-curl --silent $uri | $PAGER;
+page "$rfc"
