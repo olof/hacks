@@ -1,0 +1,24 @@
+#!/bin/perl
+use warnings FATAL => 'all';
+use strict;
+use feature qw/say/;
+use Net::IP;
+use Net::DNS;
+
+my $res = Net::DNS::Resolver->new;
+my $ip = Net::IP->new( shift ) or die Net::IP::Error;
+my $pkt = $res->query($ip->aslookup_ip, 'TXT') or
+	die($ip->aslookup_ip . "didn't resolve\n");;
+
+say $_->rdatastr for $pkt->answer;
+
+package Net::IP;
+
+sub aslookup_ip {
+	my $self = shift;
+	my $rev = $self->reverse_ip;
+
+	$rev =~ s/\Q.ip6.arpa.\E$/.origin6.asn.cymru.com./;
+	$rev =~ s/\Q.in-addr.arpa.\E$/.origin.asn.cymru.com./;
+	return $rev;
+}
