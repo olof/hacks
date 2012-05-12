@@ -1,0 +1,65 @@
+#!/bin/sh
+# Generate a DS record from a published DNSKEY
+# This relies on the bind9 dnssec utilities and dig.
+
+RESOLVER=   # should contain an address, prefixed with @ (or be empty.)
+TMPDIR=
+
+die() {
+	[ $# -eq 0 ] || echo "$@" >&2
+	exit 1
+}
+
+tmpdir() {
+	TMPDIR=$(mktemp -d '/tmp/dnssec-dsfromdns-XXXXXX')
+	[ -n "$TMPDIR" ] || die "Could not create tmpfile $TMPDIR"
+
+	cd $TMPDIR || die
+}
+
+cleanup() {
+	[ -z "$TMPDIR" ] || rm -rf $TMPDIR
+}
+
+gen_keyfile() {
+	local dnskey="$1"
+	local IFS='
+'
+	for r in $dnskey; do
+		echo "$domain. IN DNSKEY $r"
+	done
+}
+
+get_dnskey() {
+	local domain=$1
+
+	{
+		dig +cd $RESOLVER +short DNSKEY $domain ||
+			die 'Could not complete DNS query' 
+	} | sed -e 's/;.*//'
+}
+
+while [ $# -gt 0 ]; do
+	case $1 in
+		@*)
+			RESOLVER=$1
+			;;
+		*)
+			[ $# -eq 1 ] || die "Unknown option $1"
+			domain=${1%.}
+	esac
+
+	shift
+done
+
+[ -n "$domain" ] || die 'No domain specified'
+
+trap cleanup EXIT
+tmpdir
+dnskey=$( get_dnskey $domain )
+[ -n "$dnskey" ] || die "Error resolving or no DNSKEY. $domain not signed?"
+
+gen_keyfile "$dnskey" > tmp.key
+dnssec-dsfromkey tmp.key
+
+exit 0
