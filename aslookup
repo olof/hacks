@@ -8,7 +8,7 @@ use Net::DNS;
 my $res = Net::DNS::Resolver->new;
 my $ip = Net::IP->new( shift ) or die Net::IP::Error;
 my $pkt = $res->query($ip->aslookup_ip, 'TXT') or
-	die($ip->aslookup_ip . "didn't resolve\n");;
+	die($ip->aslookup_ip . " didn't resolve\n");;
 
 say $_->rdatastr for $pkt->answer;
 
