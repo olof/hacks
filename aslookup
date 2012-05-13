@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/bin/perl
 use warnings FATAL => 'all';
 use strict;
 use feature qw/say/;
