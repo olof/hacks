@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright 2011, Olof Johansson <olof@ethup.se>
+# Copyright 2011, 2012, Olof Johansson <olof@ethup.se>
 # Copyright 2011, Magnus Woldrich <magnus@trapd00r.se>
 #
 # Copying and distribution of this file, with or without
@@ -17,6 +17,55 @@ use XML::Simple qw/XMLin/;
 use LWP::Simple qw/get/;
 use Getopt::Long qw/:config gnu_getopt/;
 use Pod::Usage qw/pod2usage/;
+use HTML::Entities;
+use JSON;
+use Data::Dumper;
+use Encode;
+
+package Video;
+
+sub new {
+	my $class = shift;
+	my $jsonobj = shift;
+
+	my %bitratemap = map {
+		$_->{bitrate} => $_->{url}
+	} @{$jsonobj->{video}->{videoReferences}};
+
+	bless {
+		%bitratemap,
+		bitrates => [ keys %bitratemap ],
+		id => $jsonobj->{videoId},
+		filename => $jsonobj->{statistics}->{title},
+		title => $jsonobj->{context}->{title},
+		length => $jsonobj->{video}->{materialLength},
+	}, $class;
+}
+
+sub bitrates {
+	my $self = shift;
+	return @{$self->{bitrates}};
+}
+
+sub url {
+	my $self = shift;
+	my $bitrate = shift;
+	return $self->{$bitrate};
+}
+
+sub filename {
+	my $self = shift;
+	my $bitrate = shift;
+	return $self->{filename} unless $bitrate;
+	return "$self->{filename}.mp4" # is this what you call heuristics?
+}
+
+sub title {
+	my $self = shift;
+	return $self->{title};
+}
+
+package main;
 
 sub usage {
 	pod2usage(
@@ -42,75 +91,51 @@ GetOptions($opts,
 	'version|v',
 );
 
-my $data = _get( shift );
+my $vid = _get( shift );
 
 if($opts->{bitrate}) {
 	if($opts->{download}) {
-		download( $data->{$opts->{bitrate}} );
+		download($vid, $opts->{bitrate});
 	} else {
-		say $data->{$opts->{bitrate}};
+		say $vid->url($opts->{bitrate});
 	}
 } else {
 	if($opts->{download}) {
 		say "W: You have to do specify a bitrate";
 	}
 
-	foreach(keys %{$data}) {
-		say "$_: $data->{$_}";
+	for ($vid->bitrates) {
+		say "$_: ", $vid->url($_);
 	}
 }
 
 exit 0;
 
+# the whole subroutine is ugly
 sub _get {
 	my $uri = shift;
 
+	$uri .= '?type=embed' unless $uri =~ /\?/;
+	$uri .= '&type=embed' unless $uri =~ /[?&]type=/;
+
 	my $html = get($uri) or die("Could not GET $uri: $!\n");
 
-	my($flash_vars) = $html =~ /<param name="flashvars" value="([^"]*)"/;
-	my ($urlmap) = $flash_vars =~ /dynamicStreams=(.*?)&amp;/;
-	
-	my %h;
-	for my $elm (split /\|/, $urlmap) {
-		my %fmt;
-
-		for my $e (split(/,/, $elm, 2)) {
-			my($k, $v) = $e =~ / (\w+):(.+) /x;
-			$fmt{$k} = $v;
-		}
-
-		$h{$fmt{bitrate}} = $fmt{url};
-	}
-
-	return \%h;
-}
-
-sub get_filename {
-	my $url = shift;
-
-	return $opts->{output} if $opts->{output};
-
-	# originally implemented by woldrich.. not really sure
-	# what it does, but to hell with it... it works.
-	my $filename;
-	if($url =~ m;.+/(.+)mp4-[a-f]-v[1-9];) {
-		$filename = lc $1;
-		$filename =~ s/^[A-Z]+-[0-9]{2,}-[0-9]{2,}(?:[A-Z]+)?-//i;
-	} else {
-		$filename = $url =~ m;/(.+);;
-	}
-
-	$filename =~ s/-+$//;
-	$filename .= '.mp4'; # no consistency from svt, fuck it
-
-	return $filename;
+	my($html_flash_vars) = $html =~
+		/<param name="flashvars" value="json=([^"]*)"/;
+	my $json_flash_vars = decode_entities($html_flash_vars);
+	my $json_flash_vars_utf8 = encode(
+		'utf-8', decode('iso-8859-1', $json_flash_vars)
+	);
+	my $flash_vars = decode_json($json_flash_vars_utf8);
+	return Video->new($flash_vars);
 }
 
 sub download {
-	my $url = shift;
+	my $vid = shift;
+	my $bitrate = shift;
 
-	my $filename = get_filename($url);
-	#unlink $filename if -e $filename and $opts->{force};
+	my $url = $vid->url($bitrate);
+	my $filename = $vid->filename($bitrate);
 	print "using filename $filename\n\n";
 	exec("rtmpdump -r $url -o $filename");
 }
