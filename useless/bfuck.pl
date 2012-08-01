@@ -77,7 +77,7 @@ sub dec  { shift->{buffer}->dec; }
 sub inc  { shift->{buffer}->inc; }
 sub prev { shift->{buffer}->prev; }
 sub next { shift->{buffer}->next; } 
-sub get  { shift->{buffer}->set(getc); }
+sub get  { shift->{buffer}->set(ord getc); }
 sub put  { print chr shift->{buffer}->get; }
 sub run  { my $self = shift; while($self->step) {} }
 sub noop { 'this is actually a syntax error' }
