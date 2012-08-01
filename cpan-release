@@ -1,0 +1,34 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Term::ReadPassword;
+use CPAN::Uploader;
+
+sub readauth {
+	my($f, $str) = @_;
+
+	my $tries = 0;
+	my $input;
+	$input = $f->("$str: ") until $input =~ /\S/ or $tries++ >= 3;
+	chomp $input;
+	return $input;
+}
+
+sub username {
+	readauth(sub {
+		print $_[0];
+		<>;
+	}, 'Username');
+}
+
+sub password {
+	readauth(\&read_password, 'Password');
+}
+
+my $file = shift;
+die("You need to specify a file to upload") unless $file;
+die("No such file '$file'") unless -e $file;
+die("Could not read '$file'") unless -r $file;
+my $user = username or die("No username given");
+my $pass = password or die("No password given");;
+CPAN::Uploader->upload_file($file, { user => $user, password => $pass });
