@@ -2,10 +2,24 @@
 use warnings FATAL => 'all';
 use strict;
 use Text::ASCIITable;
+use File::Basename;
+our $NAME = basename($0);
+
+sub usage {
+	print << "EOF";
+Usage:
+
+   $NAME <title> <column headers> <row ...>
+
+ Where each column (including the headers) is delimited by a ':'.
+EOF
+	exit 1;
+}
 
 my $title = shift;
 my $cols = shift;
 
+usage unless $title and $cols;
 
 my $tbl = Text::ASCIITable->new({headingText=>$title});
 $tbl->setCols(split /:/, $cols);
