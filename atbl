@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+use warnings FATAL => 'all';
+use strict;
+use Text::ASCIITable;
+
+my $title = shift;
+my $cols = shift;
+
+
+my $tbl = Text::ASCIITable->new({headingText=>$title});
+$tbl->setCols(split /:/, $cols);
+
+for(@ARGV) {
+	$tbl->addRow(split /:/);
+}
+
+print $tbl;
