@@ -1,0 +1,122 @@
+#!/bin/sh
+
+GITHUB_PATH=/home/olof/src/github
+
+GIT_OPTS=
+GIT_CMD_OPTS=
+GIT_CMD=
+
+REPO_URL=
+REPO_DEST=
+
+GITHUB_AUTHOR=
+
+die() {
+	echo "Error:" "$@" >&2
+	exit 1
+}
+
+get_arg() {
+	local arg="$@"
+	[ "$url" ] || {
+		url=$arg
+		return 0
+	}
+
+	[ "$dest" ] || {
+		dest=$arg
+		return 0
+	}
+
+	die "Unknown argument: $arg"
+}
+
+get_clone_args() {
+	while [ $# -gt 1 ]; do
+		arg=$1
+		shift
+
+		case $arg in
+			--author)
+				GITHUB_AUTHOR=$arg
+				;;
+			-*)
+				GIT_CMD_OPTS="$GIT_CMD_OPTS $arg"
+				;;
+			*)
+				get_arg "$arg"
+				;;
+		esac
+	done
+}
+
+get_author() {
+	:
+}
+
+get_git_args() {
+	while [ $# -gt 1 ]; do
+		arg=$1
+		shift
+		case $1 in
+			-*)
+				GIT_OPTS="$GIT_OPTS $arg"
+				;;
+			*)
+				GIT_CMD=$1
+				return 0
+				;;
+		esac
+	done
+
+	die "No git command specified"
+}
+
+gh_url_author() {
+	local url="$1"
+
+	case $url in
+		ssh://*)
+			author=${url#*github.com:}
+			;;
+		*://*)
+			author=${url#*github.com/}
+			;;
+		*)
+			author=${url#*github.com:}
+			;;
+	esac
+			
+
+	author=${author%%/*}
+
+	echo $author
+}
+
+gh_author_dir() {
+	local url="$1"
+}
+
+git_clone() {
+	get_clone_args
+
+	case $REPO_URL in
+		*github.com/*/*)
+			gh_author_dir $REPO_URL
+			;;
+	esac
+
+	git $GIT_OPTS clone $GIT_CMD_OPTS "$REPO_URL" "$REPO_DEST"
+}
+
+# To be able to source this in for unit tests, set UNIT_TEST=y
+[ "$UNIT_TEST" != y ] || return 0
+
+case $GIT_CMD in
+	clone)
+		git_clone
+		;;
+	*)
+		die "Invalid command: '$GIT_CMD'"
+		;;
+esac
