@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 die() { echo "Error:" "$@" >&2; exit 1; }
+clean() { [ ! -e $M3U ] || rm $M3U; }
 
 URL=$1
 OUT=$2
@@ -10,6 +11,7 @@ OUT=$2
 
 M3U=$(mktemp /tmp/hls-hack.m3u8-XXXXXX)
 [ -e "$M3U" ] || die "Could not create temp file"
+trap clean EXIT
 
 curl -s "$URL" | grep ^http >$M3U
 
