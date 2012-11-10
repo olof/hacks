@@ -60,7 +60,16 @@ sub download {
 
 	my $uri = URI->new($enc->url);
 	my $filename = basename($uri->path);
-	my $filedest = "$poddest/$pod/$filename";
+	my $poddir = "$poddest/$pod";
+	my $filedest = "$poddir/$filename";
+
+	if (! -e $poddir) {
+		mkdir $poddir or die "Could not create $poddir\n";
+	}
+
+	if (! -d $poddir) {
+		die "$poddir exists, but is not a directory\n";
+	}
 
 	return if -e $filedest;
 
