@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+use 5.012;
+use Getopt::Long qw(:config gnu_getopt);
+use List::Util qw(reduce);
+use Net::DNS::Resolver;
+
+my $service = 'bl.rfc-ignorant.de';
+my @zones = qw(dsn postmaster abuse whois bogusmx fulldom);
+my $longest = reduce { $b < $a ? $a : $b } map { 1+length } @zones;
+
+GetOptions(my $opts = { } => qw(
+	silent|s
+));
+
+sub usage {
+	say "Usage: rfci <target>";
+	exit 0;
+}
+
+sub out {
+	return if $opts->{silent};
+	print @_;
+}
+
+my $target = shift or usage();
+usage() if $target eq '--help' or $target eq '-h';
+my $ret = 0;
+
+my $res = Net::DNS::Resolver->new();
+
+out "Testing $target againt $service...\n";
+for my $zone (@zones) {
+	out sprintf "%-${longest}s ", "$zone:";
+	my $resp = $res->send("$target.$zone.$service", 'A');
+
+	if($resp->header->rcode eq 'NXDOMAIN') {
+		out "ok\n";
+	} else {
+		out "not ok\n";
+		$ret = 1;
+	}
+}
+
+exit $ret;
