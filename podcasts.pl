@@ -14,6 +14,7 @@ use XML::Feed;
 use Text::Wrapper;
 use File::Basename;
 use HTML::FormatText;
+use Getopt::Long;
 
 # FIXME: better mail support (we now rely on cron to mail for us)
 # FIXME: Document!
@@ -21,6 +22,8 @@ use HTML::FormatText;
 
 my $podlist = "$ENV{HOME}/.podcasts";
 my $poddest = "$ENV{HOME}/media/podcasts";
+
+my $verbose = 0;
 
 sub alert {
 	my $pod = shift;
@@ -96,6 +99,10 @@ my %rss;
 open my $fh, '<', $podlist or die "Could not open podlist: $!\n";
 my $n = 0;
 
+GetOptions(
+	'verbose|v' => \$verbose,
+) or die("\n");
+
 while(<$fh>) {
 	my $m = 0;
 	my ($pod, $uri) = /^(\w+):\s*(.*)/;
@@ -106,7 +113,7 @@ while(<$fh>) {
 		download($pod, $item) and ++$m;
 	}
 
-	say STDERR "Downloaded $m new episodes of $pod";
+	say STDERR "Downloaded $m new episodes of $pod" if $verbose or $m > 0;
 
 	$n += $m;
 }
@@ -114,5 +121,5 @@ while(<$fh>) {
 if ($n) {
 	say STDERR "Downloaded $n new episodes, in total";
 } else {
-	say STDERR "No new episodes."
+	say STDERR "No new episodes." if $verbose;
 }
