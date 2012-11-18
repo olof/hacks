@@ -41,7 +41,7 @@ sub alert {
 		$summary = HTML::FormatText->format_string(
 			$body,
 			leftmargin => 0, rightmargin => 65
-		) );
+		);
 	}
 	
 	print $wrapper->wrap($summary) if defined $summary;
