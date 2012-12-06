@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use File::Basename;
+my $NAME = basename($0);
+my $TDD_RUNNER = "$ENV{HOME}/.notion/tdd-runner";
+
+sub identify {
+	return 'make test' if -e 'Makefile.PL' and -e 'Makefile';
+}
+
+my $cmd = shift or die("$NAME <gen|rm>\n");
+
+if ($cmd eq 'rm') {
+	unlink $TDD_RUNNER or die("Could not delete $TDD_RUNNER: $!\n");
+	exit 0;
+}
+
+if ($cmd eq 'gen') {
+	my $type = identify();
+	gen_runner($type);
+}
+
+sub gen_runner {
+	my $type = shift;
+	my $pwd = $ENV{PWD};
+
+	die "Could not autogenerate a TDD runner!\n" unless $type;
+	die "Do 'gen-tdd-runner rm' first\n" if -e $TDD_RUNNER;
+
+	open my $fh, '>', $TDD_RUNNER or die("Couldn't open $TDD_RUNNER: $!\n");
+	chmod 0755, $TDD_RUNNER;
+
+	select $fh;
+	print << "EOF";
+#!/bin/sh -e
+cd "$pwd"
+make test
+EOF
+}

@@ -1,0 +1,19 @@
+Tl;dr: Continuously run a script on a fixed location and report
+its status in the statusbar.
+
+Generate a trivial script that runs unit tests for a specific
+project and then have notion's statusd facility run it every 10
+seconds and report the status. The workflow idea is to activate
+it when you starting hacking on a project and have it run while
+your developing. If you leave for another project, you'll just
+generate a new tdd-runner and continue hacking. When done, you
+just 
+
+This distribution contains the statusd script (written iin lua,
+requires lua's posix module) and a helper script that can
+generate the so called "tdd runners" (currently only for
+ExtUtils::Makemaker based projects though). It can also
+deactivate (remove) it.
+
+The script location is ~/.notion/tdd-runner. It must be
+executable and have a shebang line (or be a binary, whatever).
