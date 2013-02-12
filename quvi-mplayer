@@ -1,0 +1,48 @@
+#!/bin/sh
+# Copyright 2012, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
+# offered as-is, without any warranty.
+
+# Play youtube videos (and other stuff quvi supports)
+# with mplayer. Dependencies:
+#  * JSON::XS (perl module)
+#  * libquvi
+#  * mplayer
+
+die() {
+	echo "Error:" "$@" >&2
+	exit 1
+}
+
+format=best
+while [ $# -gt 1 ]; do
+	case $1 in
+		-f|--format)
+			shift
+			format=$1
+			;;
+		-*)
+			die "Unknown option: $1"
+			;;
+		*)
+			die "Unknown argument: $1"
+			;;
+	esac
+	shift
+done
+
+URI=$1
+
+[ "$URI" ] || die "No URI supplied"
+
+stream=$(
+	quvi -f "$format" "$URI" |
+		json_xs -e 'print $_->{link}->[0]->{url}' -t none
+)
+
+[ "$stream" ] || die "No stream found"
+
+mplayer -fs "$stream"
