@@ -8,7 +8,7 @@ carp() {
 }
 
 usage() {
-	[ $# -gt 0 ] && echo "Error: $@"
+	[ $# -gt 0 ] && carp "Arguments expected"
 
 	cat <<- EOF
 		USAGE:
