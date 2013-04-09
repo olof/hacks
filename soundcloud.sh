@@ -20,7 +20,7 @@ TITLE="${WEB##*/}"
 [ -n "$TITLE" ] || die "$WEB should not end with /"
 
 STREAM=$(
-	curl -s "$WEB" | grep -F "$TITLE" | 
+	curl -A firefox -s "$WEB" | grep -F "$TITLE" |
 		sed -ne 's/.*"streamUrl":"\([^"]\+\).*/\1/p'
 )
 [ -n "$STREAM" ] || die "Unable to find stream url in $WEB"
