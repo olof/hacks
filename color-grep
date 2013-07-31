@@ -20,9 +20,17 @@ my $pattern = shift or die ("Usage: color-grep [-i] <pattern> [file, ...]\n");
 
 my $match;
 while (<>) {
-	my $mode = 'ge';
-	$mode .= 'i' if $opts->{'ignore-case'};
-	$match |= eval "s/(\$pattern)/colored(\$1, 'bold red')/$mode";
+	my $mode = '';
+	$mode = 'i' if $opts->{'ignore-case'};
+
+	my $re = eval "qr/(\$pattern)/$mode";
+	if ($@) {
+		my $err = $@;
+		$err =~ s/ at \(eval 1\) .*//s;
+		die "Error: $err\n";
+	}
+
+	$match |= s/($re)/colored($1, 'bold red')/ge;
 	print;
 }
 
