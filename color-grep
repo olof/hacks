@@ -20,11 +20,9 @@ my $pattern = shift or die ("Usage: color-grep [-i] <pattern> [file, ...]\n");
 
 my $match;
 while (<>) {
-	if ($opts->{'ignore-case'}) {
-		$match |= s/($pattern)/colored($1, 'bold red')/gei;
-	} else {
-		$match |= s/($pattern)/colored($1, 'bold red')/ge;
-	}
+	my $mode = 'ge';
+	$mode .= 'i' if $opts->{'ignore-case'};
+	$match |= eval "s/(\$pattern)/colored(\$1, 'bold red')/$mode";
 	print;
 }
 
