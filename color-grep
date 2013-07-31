@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+# color-grep - colorize strings matching a pattern
+#
+# Copyright 2013, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+
+use warnings FATAL => 'all';
+use strict;
+use Term::ANSIColor;
+use Getopt::Long;
+
+GetOptions my $opts = { }, qw(
+	ignore-case
+);
+my $pattern = shift or die ("Usage: color-grep [-i] <pattern> [file, ...]\n");
+
+my $match;
+while (<>) {
+	if ($opts->{'ignore-case'}) {
+		$match |= s/($pattern)/colored($1, 'bold red')/gei;
+	} else {
+		$match |= s/($pattern)/colored($1, 'bold red')/ge;
+	}
+	print;
+}
+
+exit not $match;
+
+=head1 NAME
+
+color-grep - colorize strings matching a pattern
+
+=head1 DESCRIPTION
+
+This utility is similar to grep, but with the difference that it
+prints all lines, only colorizing strings matching the pattern.
+
+=head1 OPTIONS
+
+=head2 Matching Control
+
+=head3 -i, --ignore-case
+
+Ignore case distinction in both the PATTERN and the input files.
+
+=head2 REGULAR EXPRESSION
+
+This grep like utility B<only> supports Perl regular expressions.
+If you are unfamiliar with out they work, see L<perlre> and
+L<perlreref>. (Often very similar to extended regular
+expressions).
+
+=head2 EXIT STATUS
+
+The exit status is 0 if selected lines are found, and 1 if not
+found.
+
+=head2 COPYRIGHT
+
+Copyright 2013, Olof Johansson <olof@ethup.se>
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved. This file is offered as-is,
+without any warranty.
