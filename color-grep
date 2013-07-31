@@ -48,7 +48,7 @@ Ignore case distinction in both the PATTERN and the input files.
 =head2 REGULAR EXPRESSION
 
 This grep like utility B<only> supports Perl regular expressions.
-If you are unfamiliar with out they work, see L<perlre> and
+If you are unfamiliar with how they work, see L<perlre> and
 L<perlreref>. (Often very similar to extended regular
 expressions).
 
