@@ -1,0 +1,126 @@
+#!/bin/bash
+# A git wrapper that lets you override built in commands
+#
+# Copyright 2013, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
+# offered as-is, without any warranty.
+
+# README
+########
+# This script lets you make changes in how git's default commands
+# behave. You can define your own functions in a shell script
+# placed in ~/.git/wrappers/. Any file therein will be sourced by
+# the git wrapper. Any function within those files that matches
+# the pattern git_wrapper_cmd_<cmd> will be called prior to
+# invoking the real git command.
+#
+# External scripts can not do exec to completely substitute the
+# original git command.
+#
+# The following varialbes are provided:
+#
+#  GIT GIT_CMD GIT_CMD_OPTS GIT_GLOBAL_OPTS
+#
+# GIT contains the path to the real git program. Or actually, the
+# first argument(s) to exec (see Examples for ways to take
+# advantage of this).
+#
+# GIT_CMD contains the git sub command to execute, e.g. push,
+# init, commit, etc.
+#
+# GIT_GLOBAL OPTS contains the arguments before the command name.
+#
+# GIT_CMD_OPTS contains the arguments after the command name.
+#
+# # Examples
+# ##########
+# Make sure to always commit with a signed-off-by footer:
+#
+#  # Always add signed-off-by footer to commit message
+#  git_wrapper_cmd_commit() {
+#    exec $GIT $GIT_GLOBAL_OPTS commit -s $GIT_CMD_OPTS
+#  }
+#
+# You can exec within your function to completely replace
+# the original git command, or you can simply perform some
+# preparations before the command, e.g. adding a flags to
+# the CMD_OPTS variable:
+#
+#  # Reject pulls that result in a merge commit
+#  git_wrapper_cmd_pull() {
+#    GIT_CMD_OPTS="--ff-only $GIT_CMD_OPTS"
+#  }
+#
+# Or replace the git command:
+#
+#  # Uses tsocks to make git be able to penetrate proxy
+#  git_wrapper_cmd_pull() {
+#    GIT="tsocks $GIT"
+#  }
+#
+# But of course, the last example is probably relevant for every
+# command that needs network access. You can instead set the GIT
+# variable in the outer scope directly.
+#
+#   GIT="tsocks $GIT"
+#
+# This makes it use tsocks for every command, regardless of if
+# you override it or not.
+#
+# # INSTALLATION
+# ##############
+# This script can be installed as git in your ~/bin, or as a
+# variation of the git command, e.g. gw, gitw or whatever
+# pleases you.
+#
+# # PORTABILITY NOTE
+# ##################
+# This script relies on a bashism: ${foo//bar/baz} substitution.
+# This is obviously unfortunate, so if you have ides on how to
+# solve the quoting hell (without forking), please let me know.
+#
+# # REPORTING BUGS
+# ################
+# Open an issue at https://github.com/olof/hacks/issues or send
+# me an email.
+
+GIT=/usr/bin/git
+
+for cmd in "$HOME/.git/wrappers/*"; do
+	. $cmd
+done
+
+GIT_GLOBAL_OPTS=
+GIT_CMD_OPTS=
+GIT_CMD=
+
+# Filter out the first argument that doesn't begin with a -. This
+# is the command, e.g. commit, push etc. Keep any flags before
+# the command, and store it in $OPTS. Any arguments that come
+# after the command is kept in $@.
+CUR_OPTS=GIT_GLOBAL_OPTS
+while [ $# -gt 0 ]; do
+	# XXX: Bashism. Also: quoting is fun: 'Fnord's' => 'Fnord'\''s'
+	arg=${1//\'/\'\\\'\'}
+	shift
+
+	case $1 in
+		*) [ "$GIT_CMD" ] || {
+			GIT_CMD="$arg"
+			CUR_OPTS=GIT_CMD_OPTS
+			continue
+		}
+	esac
+
+	eval "$CUR_OPTS=\"\$$CUR_OPTS '\$arg'\""
+done
+unset arg
+unset CUR_OPTS
+
+# If the command has a corresponding git_wrapper_cmd_, then use it
+! command -v git_wrapper_cmd_$GIT_CMD >/dev/null || git_wrapper_cmd_$GIT_CMD
+
+eval exec $GIT $GIT_GLOBAL_OPTS $GIT_CMD $GIT_CMD_OPTS
