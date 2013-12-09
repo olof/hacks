@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use JSON;
+use YAML;
+
+print Dump(decode_json(join '', <>));
