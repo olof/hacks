@@ -18,18 +18,21 @@ GetOptions my $opts = { }, qw(
 );
 my $pattern = shift or die ("Usage: color-grep [-i] <pattern> [file, ...]\n");
 
-my $match;
+my $mode = '';
+$mode = 'i' if $opts->{'ignore-case'};
+
+my $re = eval "qr/(\$pattern)/$mode";
+if ($@) {
+	my $err = $@;
+	$err =~ s/ at \(eval 1\) .*//s;
+	die "Error: $err\n";
+}
+
+# match is used to determine if any matches were found, determinig
+# the exit status.
+my $match = 0;
+
 while (<>) {
-	my $mode = '';
-	$mode = 'i' if $opts->{'ignore-case'};
-
-	my $re = eval "qr/(\$pattern)/$mode";
-	if ($@) {
-		my $err = $@;
-		$err =~ s/ at \(eval 1\) .*//s;
-		die "Error: $err\n";
-	}
-
 	$match |= s/($re)/colored($1, 'bold red')/ge;
 	print;
 }
