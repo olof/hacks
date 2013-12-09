@@ -1,0 +1,17 @@
+#!/bin/sh
+target=$(ip route | grep -Po 'default via \K\S+')
+
+case $target in
+	*:*)
+		ping6 $target
+		;;
+	*.*)
+		ping $target
+		;;
+	'')
+		echo "No default gateway in routing table."
+		;;
+	*)
+		echo "Not sure what $target is..."
+		;;
+esac
