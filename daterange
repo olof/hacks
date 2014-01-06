@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use feature qw/say/;
 use Date::Calc qw/Today Delta_Days Date_to_Days/;
+use File::Basename qw(basename);
+my $NAME = basename($0);
 
 if(@ARGV == 1) {
 	my ($y,$m,$d) = split /-/, shift;
@@ -15,10 +17,10 @@ if(@ARGV == 1) {
 	say Delta_Days((split /-/, shift), (split /-/, shift));
 } else {
 	say << "EOF";
-USAGE: 
-  $0 <start date> <end date> # range from start date to end date
-  $0 <end date> # range from today to end date
-  $0 <start date> # range from start date to today
+USAGE:
+  $NAME <start date> <end date> # range from start date to end date
+  $NAME <end date> # range from today to end date
+  $NAME <start date> # range from start date to today
 EOF
 }
 
