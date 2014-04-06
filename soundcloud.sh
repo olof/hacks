@@ -1,9 +1,9 @@
 #!/bin/sh
-# Copyright 2012, Olof Johansson <olof@ethup.se>
+# Copyright 2012--2014, Olof Johansson <olof@ethup.se>
 #
-# Copying and distribution of this file, with or without 
-# modification, are permitted in any medium without royalty 
-# provided the copyright notice are preserved. This file is 
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
 # offered as-is, without any warranty.
 
 # Depends on curl
