@@ -13,19 +13,14 @@ die() {
 	exit 1
 }
 
-WEB=$1
+WEB=${1%/}
 [ -n "$WEB" ] || die 'Need to supply an URL'
 TITLE="${WEB##*/}"
+URL="$WEB/download"
 
 [ -n "$TITLE" ] || die "$WEB should not end with /"
 
-STREAM=$(
-	curl -A firefox -s "$WEB" | grep -F "$TITLE" |
-		sed -ne 's/.*"streamUrl":"\([^"]\+\).*/\1/p'
-)
-[ -n "$STREAM" ] || die "Unable to find stream url in $WEB"
-
-curl -Lo "$TITLE" "$STREAM"
+curl -Lo "$TITLE" "$URL"
 mime=$(file --mime "$TITLE" | sed -r 's/^[^:]+: ([^;]+);.*/\1/')
 
 # We default to assume mp3. Not sure if this is legit :)
