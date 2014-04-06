@@ -25,4 +25,16 @@ STREAM=$(
 )
 [ -n "$STREAM" ] || die "Unable to find stream url in $WEB"
 
-curl -Lo "$TITLE.mp3" "$STREAM"
+curl -Lo "$TITLE" "$STREAM"
+mime=$(file --mime "$TITLE" | sed -r 's/^[^:]+: ([^;]+);.*/\1/')
+
+# We default to assume mp3. Not sure if this is legit :)
+ext=mp3
+case $mime in
+	audio/x-wav)
+		ext=wav
+		;;
+esac
+
+mv $TITLE $TITLE.$ext
+echo "Download complete: $TITLE.$ext"
