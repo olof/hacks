@@ -1,0 +1,72 @@
+#!/usr/bin/perl
+# Copyright 2014, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
+# offered as-is, without any warranty.
+
+use 5.014;
+use warnings FATAL => 'all';
+use Getopt::Long qw(:config gnu_getopt);
+use Pod::Usage;
+
+GetOptions(my $opts = {
+	help => sub { pod2usage(0) },
+}, qw(
+	old-count=f
+	old-price=f
+	add-count=f
+	add-price=f
+	add-sum=f
+
+	help|h
+)) or exit 1;
+
+if ($opts->{'add-sum'}) {
+	$opts->{'add-count'} = sprintf "%d",
+		$opts->{'add-sum'} / $opts->{'add-price'};
+}
+
+
+say "($opts->{'old-price'} * $opts->{'old-count'} + $opts->{'add-price'} * $opts->{'add-count'}) / ($opts->{'old-count'} + $opts->{'add-count'})";
+printf "%.3f\n", ($opts->{'old-price'} * $opts->{'old-count'} +
+                  $opts->{'add-price'} * $opts->{'add-count'}) /
+                 ($opts->{'old-count'} + $opts->{'add-count'});
+
+=head1 NAME
+
+avg-price-change - calculate avg purchase price after additional purchases
+
+=head1 DESCRIPTION
+
+Calculate average purchase price after additional purchases, for instance:
+
+ Old quantity:        100
+ Old average cost:     10
+ Additional quantity: 100
+ Additional cost:       5
+ --------------------------
+ New average cost:      7.5
+
+would be
+
+ $ avg-price-change --old-count 100 --old-price 10 --add-price 5 --add-count 100
+ (10 * 100 + 5 * 100) / (100 + 100)
+ 7.500
+
+=head1 OPTIONS
+
+=over
+
+=item --old-count
+
+=item --old-price
+
+=item --add-count
+
+=item --add-price
+
+=item --add-sum
+
+=back
