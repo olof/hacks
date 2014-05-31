@@ -1,0 +1,13 @@
+#!/bin/sh
+
+URL=https://api.github.com/gitignore/templates
+CURL_OPTS="$CURL_OPTS -L"
+CURL_OPTS="$CURL_OPTS -s"
+CURL_OPTS="$CURL_OPTS -H 'Accept: application/vnd.github.v3.raw'"
+
+if [ -z "$1" ]; then
+	curl $CURL_OPTS $URL
+	exit 0
+fi
+
+curl $CURL_OPTS $URL/$1 | json_xs -t none -e 'print $_->{source}'
