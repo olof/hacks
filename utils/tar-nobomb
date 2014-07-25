@@ -1,0 +1,63 @@
+#!/bin/sh
+# Copyright 2014, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without
+# modification, are permitted in any medium without royalty
+# provided the copyright notice are preserved. This file is
+# offered as-is, without any warranty.
+
+# A hackish tarbomb detector. You should be able to alias tar to this script and
+# it will error if it detects a tarbomb.
+TAR=tar
+
+# detect_filename will try (hack hack hack) to extract the tarfile argument from
+# a tar command.
+detect_filename() {
+	while [ "$#" -gt 0 ]; do
+		# Ok, really ugly, but as it turns out, gnu tar has only
+		# *one* option that ends with f: --diff. Otherwise, if the
+		# last character of the argument is f, the next argument is
+		# a tarfile. I suspect that I am missing several corner cases.
+		case $1 in
+			--diff)
+				;;
+			--file|*f)
+				echo "$2"
+				return 0
+				;;
+		esac
+
+		shift
+	done
+
+	return 1
+}
+
+filter_topdir() {
+	perl -pe 's|^(?:\./)?([^/]+).*|$1|'
+}
+
+# avoid_tarbomb will return success as long as every file in the tarfile has a
+# common directory prefix (after ./). Returns failure otherwise.
+avoid_tarbomb() {
+	tar tf "$1" | filter_topdir | {
+		while read topdir trailing; do
+			[ "$prefix" ] || prefix="$topdir"
+
+			if [ "$prefix" != "$topdir" ]; then
+				return 1
+			fi
+		done
+		[ "$prefix" ]
+	}
+}
+
+tarfile=$(detect_filename "$@")
+if [ $? -eq 0 ]; then
+	if ! avoid_tarbomb "$tarfile"; then
+		echo "Error: $tarfile seems to be a tarbomb!" >&2
+		exit 1
+	fi
+fi
+
+exec $TAR "$@"
