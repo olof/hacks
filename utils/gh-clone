@@ -1,0 +1,67 @@
+#!/bin/sh
+# Copyright 2015, Olof Johansson <olof@ethup.se>
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+#
+#### README:
+# This script clones a git repository from github, in a path decided
+# based on the github account name. The base directory is specified
+# in the $REPO_BASE environment variable, which defaults to
+# $HOME/src/github.
+#
+# By default, the script will clone using ssh, but you can override
+# that by setting the $GH_CLONE_URL_PREFIX, e.g.:
+#    GH_CLONE_URL_PREFIX=git://github.com/
+# Or...
+#    GH_CLONE_URL_PREFIX=https://github.com/
+# This same mechanism can also be used for github enterprise installs.
+#
+# Final note: This script is designed so that it can be sourced, in
+# which case you will change directory to the repository when done.
+# To avoid the awkard . gh-clone syntax, you can alias this in your
+# ~/.${SHELL}rc. For instance I do: alias gh='. gh-clone'
+#
+# (I would avoid the temption of calling it ghc, since that's a haskell
+# compiler. Just fyi :).)
+
+REPO_BASE=${REPO_BASE:-$HOME/src/github}
+GH_CLONE_URL_PREFIX=${GH_CLONE_URL_PREFIX:-git@github.com:}
+# Or...
+#GH_CLONE_URL_PREFIX=git://github.com/
+# Or...
+#GH_CLONE_URL_PREFIX=https://github.com/
+
+die() {
+	echo "Error: $@" >&2
+	exit 1
+}
+
+user=$1
+repo=$2
+
+gh_user_dir="$REPO_BASE/$user"
+gh_repo_dir="$gh_user_dir/$repo"
+
+
+( # subshell so that we can safely die within
+set -e
+[ -e "$gh_user_dir" ] || mkdir -p "$gh_user_dir"
+[ -d "$gh_user_dir" ] || die "Hum, $gh_user_dir exists but isn't a directory"
+
+if [ -e "$gh_repo_dir" ]; then
+	[ -d "$gh_repo_dir" ] ||
+		die "Hum, $gh_repo_dir exists but isn't a directory"
+	[ -d "$gh_repo_dir/.git" ] ||
+		die "Hum, $gh_repo_dir exists but isn't a git repo"
+
+	cd "$gh_repo_dir"
+	echo "Info: repo is already cloned. Doing a fetch." >&2
+	git fetch -p
+else
+	cd "$gh_user_dir"
+	git clone ${GH_CLONE_URL_PREFIX}$user/$repo.git
+fi
+) && cd "$gh_repo_dir"
