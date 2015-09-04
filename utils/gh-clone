@@ -10,11 +10,16 @@
 #
 # Usage:
 #   gh-clone <user> <repo>
+#   gh-clone <git clone url>
 #
 # This script clones a git repository from github, in a path decided
-# based on the github account name (<user> argument). The base directory
-# is specified in the $REPO_BASE environment variable, which defaults to
-# $HOME/src/github.
+# based on the github account name (<user> argument). The user and
+# repo can also be extracted from a github clone url. Note that in
+# this case, github enterprise is currently not supported, but should
+# be easy enough to add if needed.
+#
+# The base directory is specified in the $REPO_BASE environment variable,
+# which defaults to $HOME/src/github.
 #
 # By default, the script will clone using ssh, but you can override
 # that by setting the $GH_CLONE_URL_PREFIX, e.g.:
@@ -38,21 +43,51 @@ GH_CLONE_URL_PREFIX=${GH_CLONE_URL_PREFIX:-git@github.com:}
 # Or...
 #GH_CLONE_URL_PREFIX=https://github.com/
 
+USER=$1
+REPO=$2
+
 die() {
 	echo "Error: $@" >&2
 	exit 1
 }
 
-user=$1
-repo=$2
+extract_from_uri() {
+	# FIXME: does not support github enterprise installs.
+	# pull requests welcome.
+	local uri="$1" part
 
-gh_user_dir="$REPO_BASE/$user"
-gh_repo_dir="$gh_user_dir/$repo"
+	for pattern in git@github.com: \
+	               https://github.com/ \
+	               git://github.com/; do
+		part=${uri#$pattern}
+		[ "$uri" != "$part" ] || continue
+
+		# Note, if supplied with paths containing multiple
+		# slashes, it's a bad clone URL. But it will fail
+		# later.
+		USER=${part%/*}
+		REPO=${part#*/}
+
+		# For are only interested in the repo name, not the
+		# .git directory suffix.
+		REPO=${REPO%.git}
+
+		break
+	done
+
+}
+
+if [ "$USER" ] && [ -z "$REPO" ]; then
+	extract_from_uri "$USER"
+fi
+
+gh_user_dir="$REPO_BASE/$USER"
+gh_repo_dir="$gh_user_dir/$REPO"
 
 ( # subshell so that we can safely die within
 set -e
 
-{ [ "$user" ] && [ "$repo" ]; } || die "Must be called with user and repo args"
+{ [ "$USER" ] && [ "$REPO" ]; } || die "Must be called with user and repo args"
 
 [ -e "$gh_user_dir" ] || mkdir -p "$gh_user_dir"
 [ -d "$gh_user_dir" ] || die "Hum, $gh_user_dir exists but isn't a directory"
@@ -68,6 +103,6 @@ if [ -e "$gh_repo_dir" ]; then
 	git fetch -p
 else
 	cd "$gh_user_dir"
-	git clone ${GH_CLONE_URL_PREFIX}$user/$repo.git
+	git clone ${GH_CLONE_URL_PREFIX}$USER/$REPO.git
 fi
 ) && cd "$gh_repo_dir"
