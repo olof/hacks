@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use feature qw/say/;
+
+
+my $exitv = 1;
+sub success { say shift; $exitv = 0 }
+my $module = shift;
+
+$module =~ s;::;/;g;
+
+foreach my $inc (@INC) {
+	success("$inc/$module.pm") if -f "$inc/$module.pm";
+	success("$inc/$module/") if -d "$inc/$module";
+}
+
+exit $exitv;
