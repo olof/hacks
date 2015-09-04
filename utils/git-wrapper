@@ -87,8 +87,10 @@
 # Open an issue at https://github.com/olof/hacks/issues or send
 # me an email.
 
+# FIXME: Bad me, hardcoded path for real git :(
 GIT=/usr/bin/git
 
+# FIXME: Do XDG paths instead? Be a good non-polluter of peoples $HOME.
 for cmd in "$HOME/.git/wrappers/*"; do
 	. $cmd
 done
