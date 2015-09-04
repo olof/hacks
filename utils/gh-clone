@@ -18,8 +18,8 @@
 # this case, github enterprise is currently not supported, but should
 # be easy enough to add if needed.
 #
-# The base directory is specified in the $REPO_BASE environment variable,
-# which defaults to $HOME/src/github.
+# The base directory is specified in the $GH_CLONE_REPO_BASE environment
+# variable, which defaults to $HOME/src/github.
 #
 # By default, the script will clone using ssh, but you can override
 # that by setting the $GH_CLONE_URL_PREFIX, e.g.:
@@ -36,7 +36,7 @@
 # (I would avoid the temption of calling it ghc, since that's a haskell
 # compiler. Just fyi :).)
 
-REPO_BASE=${REPO_BASE:-$HOME/src/github}
+GH_CLONE_REPO_BASE=${GH_CLONE_REPO_BASE:-$HOME/src/github}
 GH_CLONE_URL_PREFIX=${GH_CLONE_URL_PREFIX:-git@github.com:}
 # Or...
 #GH_CLONE_URL_PREFIX=git://github.com/
@@ -81,7 +81,7 @@ if [ "$USER" ] && [ -z "$REPO" ]; then
 	extract_from_uri "$USER"
 fi
 
-gh_user_dir="$REPO_BASE/$USER"
+gh_user_dir="$GH_CLONE_REPO_BASE/$USER"
 gh_repo_dir="$gh_user_dir/$REPO"
 
 ( # subshell so that we can safely die within
@@ -106,3 +106,7 @@ else
 	git clone ${GH_CLONE_URL_PREFIX}$USER/$REPO.git
 fi
 ) && cd "$gh_repo_dir"
+
+retval=$?
+unset USER REPO gh_user_dir gh_repo_dir
+[ $retval -eq 0 ]
