@@ -45,9 +45,11 @@ repo=$2
 gh_user_dir="$REPO_BASE/$user"
 gh_repo_dir="$gh_user_dir/$repo"
 
-
 ( # subshell so that we can safely die within
 set -e
+
+{ [ "$user" ] && [ "$repo" ]; } || die "Must be called with user and repo args"
+
 [ -e "$gh_user_dir" ] || mkdir -p "$gh_user_dir"
 [ -d "$gh_user_dir" ] || die "Hum, $gh_user_dir exists but isn't a directory"
 
