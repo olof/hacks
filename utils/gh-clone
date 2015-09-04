@@ -7,9 +7,13 @@
 # without any warranty.
 #
 #### README:
+#
+# Usage:
+#   gh-clone <user> <repo>
+#
 # This script clones a git repository from github, in a path decided
-# based on the github account name. The base directory is specified
-# in the $REPO_BASE environment variable, which defaults to
+# based on the github account name (<user> argument). The base directory
+# is specified in the $REPO_BASE environment variable, which defaults to
 # $HOME/src/github.
 #
 # By default, the script will clone using ssh, but you can override
