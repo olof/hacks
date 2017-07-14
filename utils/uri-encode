@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+use 5.020;
+use URI::Encode qw(uri_encode uri_decode);
+my $f = $0 =~ /-decode$/ ? \&uri_decode : \&uri_encode;
+say $f->(do { local $/; <> }, {encode_reserved=>1})
