@@ -2,6 +2,6 @@
 
 p=${1:-.}
 
-perl -E '$,="/"; say map {int ($_/1024) . 'G'} @ARGV' $(
+perl -E '$,="/"; say map {int ($_/1024) . "G"} @ARGV' $(
 	df -m "$p" | sed -rn '2s/(\S+\s+)(\S+)\s+(\S+)\s+.*/\3 \2/p'
 )
