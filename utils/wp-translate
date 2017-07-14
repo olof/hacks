@@ -1,0 +1,15 @@
+#!/bin/sh
+# Use wikipedia as a translation dictionary:
+#
+#  $ wp-translate en ar 'Machine translation'
+#  Maskinöversättning
+#
+# This script depends on the widely available "jq" tool for
+# processing JSON and tool called "uri-encode", available
+# and and maintained in the same git repository that this
+# script is maintained.
+
+curl -Ls 'https://'"$1"'.wikipedia.org/w/api.php?action=query&titles='"$(
+	echo -n "$3" | uri-encode
+)"'&prop=langlinks&format=json&lllang='"$2" |
+	jq -r '.query.pages | .[] | .langlinks | .[] | .["*"]'
