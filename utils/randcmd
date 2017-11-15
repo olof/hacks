@@ -1,0 +1,2 @@
+#!/usr/bin/perl
+exec($ARGV[int(rand()*@ARGV)])
