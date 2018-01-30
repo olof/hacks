@@ -10,6 +10,6 @@
 # script is maintained.
 
 curl -Ls 'https://'"$1"'.wikipedia.org/w/api.php?action=query&titles='"$(
-	echo -n "$3" | uri-encode
+	echo -n "$3" | sed -re 's/ /_/g' | uri-encode
 )"'&prop=langlinks&format=json&lllang='"$2" |
 	jq -r '.query.pages | .[] | .langlinks | .[] | .["*"]'
