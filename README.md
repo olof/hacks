@@ -28,6 +28,30 @@ Calculate the duration (in days) between two dates.
     $ daterange 1970-01-01 2017-01-01
     17167
 
+### hashsums-to-tree
+Convert a hashsum list (as outputted by md5sum, sha1sum, etc. to
+a list of files grouped by the content digest.
+
+input:
+
+    6ffd97154dba59c71f4059dbcccff151  ./foo
+    98ca96b92091e8887455c61d3ba764f1  ./bar
+    385cda1cb77b6f1fc6b33cd82bb2de24  ./baz
+    385cda1cb77b6f1fc6b33cd82bb2de24  ./qux
+    385cda1cb77b6f1fc6b33cd82bb2de24  ./quux
+
+output:
+
+    ---
+    6ffd97154dba59c71f4059dbcccff151:
+     - ./foo
+    98ca96b92091e8887455c61d3ba764f1:
+     - ./bar
+    385cda1cb77b6f1fc6b33cd82bb2de24:
+     - ./baz
+     - ./qux
+     - ./quux
+
 ### json2yaml, xml-simple2yaml
 Convert JSON or XML to YAML for easier reading. Work like a
 filters:
