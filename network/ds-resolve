@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+use 5.020;
+use Net::DNS;
+use Net::DNS::RR::DS;
+
+sub print_rr {
+	my $rr = shift;
+	my $rdata_cb = shift // sub { shift()->rdstring };
+	printf "%s %d %s %s %s\n",
+		$rr->owner,
+		$rr->ttl,
+		$rr->class,
+		$rr->type,
+		$rdata_cb->($rr);
+}
+
+my $target = shift;
+#$target =~ s/\.?$/./;
+print_rr($_, sub {
+	my $rr = shift;
+	sprintf "%d %s %s %s",
+		$rr->keytag,
+		Net::DNS::RR::DS->algorithm($rr->algorithm),
+		Net::DNS::RR::DS->digtype($rr->digtype),
+		$rr->digest;
+}) for rr($target, 'DS');
