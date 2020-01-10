@@ -14,6 +14,21 @@ use charnames qw(:full);
 use open qw/:std :utf8/;
 use locale;
 
+my $theme = 'light';
+my $class = "box drawings";
+my %theme_map = map
+	{ $_->[0] => charnames::string_vianame(uc "$class $theme $_->[1]") }
+	(
+		[corner_dl => "up and right"],
+		[corner_dr => "up and left"],
+		[corner_ul => "down and right"],
+		[corner_ur => "down and left"],
+		[hedge => "horizontal"],
+		[vedge => "vertical"]
+	);
+
+sub thm { $theme_map{shift()} }
+
 sub parseline {
 	local $_ = shift;
 
@@ -41,21 +56,21 @@ sub process {
 	if ($line->{hedge}) {
 		if ($prev->{vedge}) {
 			$line->{hedge} = join("",
-				"\N{BOX DRAWINGS LIGHT UP AND RIGHT}",
-				"\N{BOX DRAWINGS LIGHT HORIZONTAL}" x ((length $line->{hedge}) - 2),
-				"\N{BOX DRAWINGS LIGHT UP AND LEFT}"
+				thm('corner_dl'),
+				thm('hedge') x ((length $line->{hedge}) - 2),
+				thm('corner_dr'),
 			);
-			$prev->{vedge} = "\N{BOX DRAWINGS LIGHT VERTICAL}";
+			$prev->{vedge} = thm('vedge'),
 		}
 	} elsif ($line->{vedge}) {
 		if ($prev->{hedge} or $prev->{vedge}) {
-			$line->{vedge} = "\N{BOX DRAWINGS LIGHT VERTICAL}";
+			$line->{vedge} = thm('vedge');
 			if ($prev->{hedge}) {
 				$prev->{hedge} = join("",
-					"\N{BOX DRAWINGS LIGHT DOWN AND RIGHT}",
-					"\N{BOX DRAWINGS LIGHT HORIZONTAL}" x ((length $prev->{hedge}) - 2),
-					"\N{BOX DRAWINGS LIGHT DOWN AND LEFT}"
-				);
+					thm('corner_ul'),
+					thm('hedge') x ((length $prev->{hedge}) - 2),
+					thm('corner_ur'),
+				)
 			}
 		} else {
 			$line = { verbatim => join("", @$line{qw(
