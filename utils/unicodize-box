@@ -10,14 +10,23 @@
 # at the bottom.
 use 5.020;
 use Data::Dumper;
+use Getopt::Long qw(:config gnu_getopt);
 use charnames qw(:full);
 use open qw/:std :utf8/;
 use locale;
 
-my $theme = 'light';
-my $class = "box drawings";
+GetOptions(my $opts = {
+	'box-weight' => 'light',
+	'box-class' => 'box drawings',
+}, qw(
+	box-weight=s
+	box-class=s
+)) or exit 1;
+
 my %theme_map = map
-	{ $_->[0] => charnames::string_vianame(uc "$class $theme $_->[1]") }
+	{ $_->[0] => charnames::string_vianame(
+		uc "$opts->{'box-class'} $opts->{'box-weight'} $_->[1]"
+	) }
 	(
 		[corner_dl => "up and right"],
 		[corner_dr => "up and left"],
