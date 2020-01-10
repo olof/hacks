@@ -16,22 +16,26 @@ use open qw/:std :utf8/;
 use locale;
 
 GetOptions(my $opts = {
-	'box-weight' => 'light',
+	'box-variant' => 'light',
 	'box-class' => 'box drawings',
 }, qw(
-	box-weight=s
+	box-variant=s
+	corner-variant=s
 	box-class=s
 )) or exit 1;
 
+# Try --corner-variant="light arc".
+$opts->{'corner-variant'} //= $opts->{'box-variant'};
+
 my %theme_map = map
 	{ $_->[0] => charnames::string_vianame(
-		uc "$opts->{'box-class'} $opts->{'box-weight'} $_->[1]"
+		uc "$opts->{'box-class'} $opts->{($_->[2] // 'box').'-variant'} $_->[1]"
 	) }
 	(
-		[corner_dl => "up and right"],
-		[corner_dr => "up and left"],
-		[corner_ul => "down and right"],
-		[corner_ur => "down and left"],
+		[corner_dl => "up and right", "corner"],
+		[corner_dr => "up and left", "corner"],
+		[corner_ul => "down and right", "corner"],
+		[corner_ur => "down and left", "corner"],
 		[hedge => "horizontal"],
 		[vedge => "vertical"]
 	);
