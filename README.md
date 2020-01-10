@@ -81,6 +81,15 @@ Written as a portable shell script.
 A PoC wrapper around tar to verify that an archive isn't a tar
 bomb (i.e. with multiple files in the toplevel) before unpacking.
 
+### unicodize-box
+Convert your shabby ascii boxes to unicode. Reads from stdin or takes a
+filename as a parameter. Filters the file and looks for boxes of "-" and
+"|" characters. Should not touch those characters when they are not a
+part of a box.
+
+Try the script by running it on itself. There's some shabby ascii boxes
+at the bottom.
+
 ### uri-encode
 URI encoding/decoding on the command line. Reads from stdin:
 

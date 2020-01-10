@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+# ex: ts=4:noex:sw=4
+# unicodize-box: convert your shabby ascii boxes to unicode
+#
+# Reads from stdin or takes a filename as a parameter. Filters the file
+# and looks for boxes of "-" and "|" characters. Should not touch those
+# characters when they are not a part of a box.
+#
+# Try the script by running it on itself. There's some shabby ascii boxes
+# at the bottom.
+use 5.020;
+use Data::Dumper;
+use charnames qw(:full);
+use open qw/:std :utf8/;
+use locale;
+
+sub parseline {
+	local $_ = shift;
+
+	/^
+		(?:
+			(?P<prefix>[\h#]*)
+			(?:
+				(?<hedge>-{2,})
+			|
+				(?<vedge>\|)(?<content>.*)\k<vedge>
+			)
+			(?P<suffix>.*)
+		|
+			(?P<verbatim>.*)
+		)
+	$/sx;
+
+	return { %+ };
+}
+
+sub process {
+	my ($prev, $line) = @_;
+	return ($prev, $line) if $prev->{prefix} ne $line->{prefix};
+
+	if ($line->{hedge}) {
+		if ($prev->{vedge}) {
+			$line->{hedge} = join("",
+				"\N{BOX DRAWINGS LIGHT UP AND RIGHT}",
+				"\N{BOX DRAWINGS LIGHT HORIZONTAL}" x ((length $line->{hedge}) - 2),
+				"\N{BOX DRAWINGS LIGHT UP AND LEFT}"
+			);
+			$prev->{vedge} = "\N{BOX DRAWINGS LIGHT VERTICAL}";
+		}
+	} elsif ($line->{vedge}) {
+		if ($prev->{hedge} or $prev->{vedge}) {
+			$line->{vedge} = "\N{BOX DRAWINGS LIGHT VERTICAL}";
+			if ($prev->{hedge}) {
+				$prev->{hedge} = join("",
+					"\N{BOX DRAWINGS LIGHT DOWN AND RIGHT}",
+					"\N{BOX DRAWINGS LIGHT HORIZONTAL}" x ((length $prev->{hedge}) - 2),
+					"\N{BOX DRAWINGS LIGHT DOWN AND LEFT}"
+				);
+			}
+		} else {
+			$line = { verbatim => join("", @$line{qw(
+				prefix vedge content vedge suffix
+			)}) },
+		}
+	}
+
+	return ($prev, $line);
+}
+
+sub render {
+	my $line = shift;
+	return $line->{verbatim} if exists $line->{verbatim};
+	my @body;
+	@body = ('vedge', 'content', 'vedge') if exists $line->{content};
+	@body = 'hedge' if exists $line->{hedge};
+	return join('',
+		@$line{'prefix', @body, 'suffix'}
+	);
+}
+
+my @output;
+my $prev = parseline(scalar <>);
+while (my $line = <>) {
+	$line = parseline($line);
+	($prev, $line) = process($prev, $line);
+	print render($prev);
+	$prev = $line;
+}
+print render($prev);
+
+# demo: run the script on the script
+# -----
+# |   |
+# | . |
+# |   |
+# -----
+#
+# --
+# ||
+# --
+#
+#  -------
+#
+# ---------------------------
+# |           |             |
+# | ceci n'est pas une pipe |
+# ---------------------------
