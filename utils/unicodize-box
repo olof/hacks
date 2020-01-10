@@ -49,36 +49,43 @@ sub parseline {
 	return { %+ };
 }
 
+sub process_hedge {
+	my ($prev, $line) = @_;
+	if ($prev->{vedge}) {
+		$line->{hedge} = join("",
+			thm('corner_dl'),
+			thm('hedge') x ((length $line->{hedge}) - 2),
+			thm('corner_dr'),
+		);
+		$prev->{vedge} = thm('vedge')
+	}
+	return ($prev, $line);
+}
+
+sub process_vedge {
+	my ($prev, $line) = @_;
+	if ($prev->{hedge} or $prev->{vedge}) {
+		$line->{vedge} = thm('vedge');
+		if ($prev->{hedge}) {
+			$prev->{hedge} = join("",
+				thm('corner_ul'),
+				thm('hedge') x ((length $prev->{hedge}) - 2),
+				thm('corner_ur'),
+			)
+		}
+	} else {
+		$line = { verbatim => join("", @$line{qw(
+			prefix vedge content vedge suffix
+		)}) },
+	}
+	return ($prev, $line);
+}
+
 sub process {
 	my ($prev, $line) = @_;
 	return ($prev, $line) if $prev->{prefix} ne $line->{prefix};
-
-	if ($line->{hedge}) {
-		if ($prev->{vedge}) {
-			$line->{hedge} = join("",
-				thm('corner_dl'),
-				thm('hedge') x ((length $line->{hedge}) - 2),
-				thm('corner_dr'),
-			);
-			$prev->{vedge} = thm('vedge'),
-		}
-	} elsif ($line->{vedge}) {
-		if ($prev->{hedge} or $prev->{vedge}) {
-			$line->{vedge} = thm('vedge');
-			if ($prev->{hedge}) {
-				$prev->{hedge} = join("",
-					thm('corner_ul'),
-					thm('hedge') x ((length $prev->{hedge}) - 2),
-					thm('corner_ur'),
-				)
-			}
-		} else {
-			$line = { verbatim => join("", @$line{qw(
-				prefix vedge content vedge suffix
-			)}) },
-		}
-	}
-
+	return process_hedge($prev, $line) if $line->{hedge};
+	return process_vedge($prev, $line) if $line->{vedge};
 	return ($prev, $line);
 }
 
