@@ -9,7 +9,6 @@
 # Try the script by running it on itself. There's some shabby ascii boxes
 # at the bottom.
 use 5.020;
-use Data::Dumper;
 use Getopt::Long qw(:config gnu_getopt);
 use charnames qw(:full);
 use open qw/:std :utf8/;
