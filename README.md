@@ -68,6 +68,24 @@ internet drafts using the -d flag.
 
     $ rfc 1034
 
+### selector-scrape
+
+Scrape content from web pages using css selectors.
+
+```
+$ selector-scrape https://en.wikipedia.org/wiki/List_of_HTTP_status_codes 'dl > dt'
+100 Continue
+101 Switching Protocols
+102 Processing (WebDAV; RFC 2518)
+103 Early Hints (RFC 8297)
+200 OK
+201 Created
+202 Accepted
+203 Non-Authoritative Information (since HTTP/1.1)
+204 No Content
+...
+```
+
 ### shell-redirector
 A PoC /bin/sh replacement that lets the user override the system
 shell to use via the environment. If /bin/sh is provided by
