@@ -148,6 +148,25 @@ Generate a DS record from DNSKEY fetched over DNS.
     $ dnssec-dsfromdns github.com
     $ Error resolving or no DNSKEY. github.com not signed?
 
+### http-codes
+Filterable list of http codes.
+
+    $ http-codes
+    <lists all codes, with their meaning>
+
+    $ http-codes 200
+    200 OK
+
+    $ http-codes OK
+    200 OK
+    498 Invalid Token (Esri)
+    499 Token Required (Esri)
+
+    $ http-codes '\bOK\b'
+    200 OK
+
+Data taken from wikipedia (see source code for details).
+
 ### pinggw
 Ping your default gateway without having to look up its ip address.
 
