@@ -1,0 +1,66 @@
+#!/bin/sh
+# Let me explain!
+# CG3100 is a crappy box from my ISP, it provides an "event log" in liue of a
+# syslog. The event log is provided as an HTML table (yay), and not only that,
+# the event messages have timestamps that update as time passes (wtf?). But
+# this mostly only affects the latest message i think. The timestamp isn't
+# sortable. So, I scrape it and forward it to my syslog instead.
+#
+# This depends on
+#  * curl
+#  * gnu coreutils' date implementation (+%s format specifier!)
+#  * logger from util-linux
+#  * selector-load from this repo (olof/hacks.git)
+#
+# I keep a copy of the log around (see $LOG), mostly to determine which
+# messages are old and which are new. This could be optimized, but can't
+# be bothered.
+
+# IP address of your modem
+TARGET=$1
+LOG=$HOME/.local/state/netgear/event.log
+
+mkdir -p ${LOG%/*}
+
+# In my case, it's a netgear cg3100; you can give it any funny name you want.
+TAG=cg3100
+#TAG=netgear
+#TAG=cablemodem
+
+seen=$(date -d $(tail -n1 $LOG | cut -f1 -d' ') +%s)
+curl -su admin:password http://$TARGET/RgEventLog.asp |
+	selector-load 'table table td' |
+	tail -n +4 |
+	xargs -d '\n' -n4 |
+	sed -re '
+		# Remove random binary crap
+		s/\xc2|\xa0//g;
+
+		# Convert to iso8601, you know how it be
+		s/^[A-Z][a-z]{2} //;
+		s/^Jan /01-/;
+		s/^Feb /02-/;
+		s/^Mar /03-/;
+		s/^Apr /04-/;
+		s/^May /05-/;
+		s/^Jun /06-/;
+		s/^Jul /07-/;
+		s/^Aug /08-/;
+		s/^Sep /09-/;
+		s/^Oct /10-/;
+		s/^Nov /11-/;
+		s/^Dec /12-/;
+		s/^([0-9]{2}-[0-9]{2}) ([0-9]{2}:[0-9]{2}:[0-9]{2}) ([0-9]{4})/\3-\1T\2/;
+
+		# Put log level in [] to make it prettier to read, and simplify
+		s/\s*(\S+)\s\([0-9]+\)\s*/ [\1] /;
+	' | sort -u | while read t line; do
+		logt=$(date -d $t +%s)
+		level=$(echo "$line" | sed -nre 's/^\[([A-Za-z]+)\].*/\1/p' | tr A-Z a-z/)
+		case $level in
+			critical) level=crit ;;
+		esac
+		[ $logt -ge $seen ] || continue
+		echo "$t $line" | tee -a $LOG
+		logger -e --tag "$TAG" --priority "$level" "$line"
+	done
