@@ -15,6 +15,10 @@
 #  204 No Content
 #  ...
 #
+# Or from stdin:
+#
+#  $ selector-scrape 'dl > dt' <list_of_http_status_codes.html
+#
 # You have to figure out the magic selector string yourself. And yeah, don't
 # forget to quote it, especially if you're using '>' :-).
 
@@ -22,12 +26,17 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 
-uri = sys.argv[1]
-selector = sys.argv[2]
+uri = sys.argv.pop(1) if len(sys.argv) > 2 else None
+selector = sys.argv[1]
 
-resp = requests.get(uri)
-resp.raise_for_status()
-bs = BeautifulSoup(resp.content, features='lxml')
+if uri:
+    resp = requests.get(uri)
+    resp.raise_for_status()
+    blob = resp.content
+else:
+    blob = sys.stdin
+
+bs = BeautifulSoup(blob, features='lxml')
 
 for r in bs.select(selector):
     print(r.text)
