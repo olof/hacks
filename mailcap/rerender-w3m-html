@@ -1,0 +1,47 @@
+#!/usr/bin/perl
+use 5.020;
+use LWP::UserAgent ();
+
+my $shorturl = $ENV{MAILCAP_HTML_URL_SHORTENER};
+my $ua = LWP::UserAgent->new(timeout => 10);
+$ua->env_proxy;
+
+my $render = do { local $/; <> };
+
+my ($text, $refs) = $render =~ m{
+	(.*)
+
+	(?<=\n)References:\n+
+
+	(?:
+		(?<=\n)
+		(
+			\[[0-9+]\]
+			\ 
+			(?:https?|file|mailto|tel):.+
+		)
+		\n
+	)*
+	\n*$
+}sx;
+my @refs = split /\n/, $refs;
+
+$text =~ s/^\s+$//m;
+$text =~ s/\n\n+/\n\n/g;
+print $text;
+print "\nReferences:\n" if @refs;
+for (@refs) {
+	my ($id, $actual_url) = /^\[([0-9]+)\] (.*)$/;
+	my $url = $actual_url;
+	if ($shorturl and length $url > 80) {
+		my $res = $ua->post($shorturl,
+			'Content-Type' => 'text/plain',
+			Content => $url,
+		);
+		if ($res->is_success) {
+			$url = $res->decoded_content;
+			chomp $url;
+		}
+	}
+	say "[$id]: $url";
+}

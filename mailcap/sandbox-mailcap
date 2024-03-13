@@ -1,0 +1,14 @@
+#!/bin/sh
+# Writes to the binded paths are impossible, and writes elsewhere
+# are not persisted. No network. Supply a command as parameter.
+exec bwrap \
+	--unshare-user \
+	--unshare-all \
+	--ro-bind / / \
+	--setenv PATH /bin:/usr/bin \
+	--uid 65534 \
+	--gid 65534 \
+	--hostname kumla \
+	--proc /proc \
+	--dev /dev \
+	"$@"

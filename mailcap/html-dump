@@ -1,0 +1,12 @@
+#!/bin/sh
+INPUT_CHARSET=${1:?}
+unshare -rn w3m \
+	-o pseudo_inlines=false \
+	-o display_image=false \
+	-o display_link_number=true \
+	-o indent_incr=1 \
+	-I "$INPUT_CHARSET" \
+	-T text/html | case $RERENDER in
+		'') cat ;;
+		*) rerender-w3m-html ;;
+	esac
