@@ -1,0 +1,18 @@
+#!/bin/sh
+die() { echo ERROR: "$@" >&2; exit 1; }
+
+witch() {
+	local name="$1" IFS=: p
+	case $name in
+		*/*)
+			[ -e "$name" ] || return 1
+			echo "$name"
+			return
+			;;
+	esac
+	for p in $PATH; do
+		[ -e "$p/$name" ] && break
+	done
+	[ -e "$p/$name" ] || return 1
+	echo "$p/$name"
+}

@@ -1,0 +1,198 @@
+#!/bin/sh
+
+_argsh_croak() { _argsh_bug "$@"; exit 1; }
+_argsh_die() { _argsh_err "$@"; exit 1; }
+_argsh_die_usage() { _argsh_err "$@"; _argsh_help; exit 1; }
+_argsh_err() { echo ERROR: "$@" >&2; }
+_argsh_bug() { echo BUG: "$@" >&2; }
+_argsh_ret() { return $?; }
+_argsh_missing_flag() { _argsh_die_usage "Missing required flag $1"; }
+_argsh_missing_pos() { _argsh_die_usage "Missing positional parameter $1"; }
+alias _argsh_missing_param='_argsh_die Missing parameter for "$1"'
+
+_ARGSH_INIT=
+_ARGSH_FLAGS_LOCALS="group head param"
+_ARGSH_FLAGS_START="
+set -- \"\$@\" --
+while [ \$# -gt 0 ]; do
+	case \$1 in
+		--?*=*)
+			param=\${1#--}
+			shift
+			set -- \"--\${param%%=*}\" \"\${param#*=}\" \"\$@\"
+			;;
+		-[!-]?*)
+			group=\${1#-}
+			shift
+			set -- \`echo \$group | sed -re 's/(.)/-\1 /g'\` \"\$@\"
+			;;
+	esac
+	case \$1 in
+		--) shift; break ;;"
+_ARGSH_FLAGS_END='
+		-*) _argsh_die "Invalid flag $1" ;;
+		*) param=$1; set -- "$@" "$param";
+	esac
+	shift
+done
+'
+_ARGSH_POS_START=
+_ARGSH_POS_END=
+_ARGSH_REQ_CHECK=""
+
+_argsh_help() {
+	_argsh_version
+	echo "
+$_ARGSH_HELP
+  $_ARGSH_HELP_POS
+
+Options:$_ARGSH_HELP_FLAGS"
+}
+
+_argsh_version() {
+	echo "$_ARGSH_NAME v$_ARGSH_VERSION"
+}
+
+_argsh_type_store() {
+	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	_ARGSH_HELP_FLAGS="$_ARGSH_HELP_FLAGS
+$(printf "  %-30s %s" "--$name, -$short <$metavar>  " "$help")"
+	case $default in
+		*\'*) _argsh_bug "default values can't contain ' :-(, i'm sorry"
+	esac
+	[ -z "$default" ] || _ARGSH_FLAGS_START="$dest='$default'
+$_ARGSH_FLAGS_START"
+	_ARGSH_FLAGS="$_ARGSH_FLAGS
+		--$name${short:+|-$short})
+			shift || _argsh_missing_param
+			$dest=\$1
+			;;
+"
+	[ "$req" != y ] || _ARGSH_REQ_CHECK="$_ARGSH_REQ_CHECK
+[ \"\$$dest\" ] || _argsh_missing_flag $name"
+}
+
+_argsh_type_bool() {
+	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	_ARGSH_HELP_FLAGS="$_ARGSH_HELP_FLAGS
+$(printf "  %-30s %s  " "--$name, -$short" "$help")"
+	_ARGSH_FLAGS="$_ARGSH_FLAGS
+		--$name${short:+|-$short})
+			$dest=y
+			;;
+"
+	[ "$req" != y ] || _ARGSH_REQ_CHECK="$_ARGSH_REQ_CHECK
+[ \"\$$dest\" ] || _argsh_missing_flag $name"
+}
+
+_argsh_type_pos() {
+	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	if [ "$req" ]; then
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS <$name>"
+	else
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS [$name]"
+	fi
+	_ARGSH_POS="$_ARGSH_POS
+[ \"\$#\" -lt 1 ] || { $dest=\"\$1\"; shift; }"
+	[ "$req" != y ] || _ARGSH_REQ_CHECK="$_ARGSH_REQ_CHECK
+[ \"\$$dest\" ] || _argsh_missing_pos $name"
+}
+
+_argsh_cmd_add() {
+	local name short type dest required description metavar=val default
+
+	# Scan the args once to find the argument name,
+	# to be able to give better error messages.
+	while [ "$#" -gt 1 ]; do
+		case $1 in
+			-*) ;;
+			*) name=$1; dest=ARG_$name; break ;;
+		esac
+	done
+
+	while [ "$#" -gt 0 ]; do
+		case $1 in
+			--required|-R) required=y ;;
+			--short|-s)
+				shift || _argsh_missing_param
+				case $1 in
+					?) short=$1 ;;
+					*) _argsh_croak \ "Invalid short flag '-$1' for $name" ;;
+				esac ;;
+			--description|-D) shift || _argsh_missing_param && description=$1 ;;
+			--default) shift || _argsh_missing_param && default=$1 ;;
+			--metavar|-M) shift || _argsh_missing_param && metavar=$1 ;;
+			--dest|-d) shift || _argsh_missing_param && dest=$1 ;;
+			--type|-t) shift || _argsh_missing_param && type=$1 ;;
+			*) ;; # skip positionals for now
+		esac
+		shift
+	done
+
+	_argsh_type_$type "$name" "$dest" "$short" "$required" \
+		          "$description" "$metavar" "$default"
+}
+
+_argsh_cmd_init() {
+	_ARGSH_HELP=
+
+	while [ "$#" -gt 0 ]; do
+		case $1 in
+			--name|-n) shift || _argsh_missing_param && _ARGSH_NAME=$1 ;;
+			--version|-v) shift || _argsh_missing_param && _ARGSH_VERSION=$1 ;;
+			--description|-d) shift || _argsh_missing_param && _ARGSH_HELP=$1 ;;
+			*) _argsh_bug "Invalid flag to arguments init: $1" ;;
+		esac
+		shift
+	done
+
+	_ARGSH_NAME=${_ARGSH_NAME:-$0}
+	_ARGSH_VERSION=${_ARGSH_VERSION:-0.0}
+	_ARGSH_HELP_POS="$_ARGSH_NAME [options...]"
+
+	_ARGSH_HELP="$_ARGSH_HELP${_ARGSH_HELP:+
+}"
+	_ARGSH_INIT=y
+	_ARGSH_REQ_CHECK=
+	_ARGSH_FLAGS=
+	_ARGSH_POS=
+}
+
+_argsh_cmd_eval() {
+	_argsh_cmd_add help --short h --type bool --dest _ARGSH_DO_HELP \
+		--description "Print help text"
+	_argsh_cmd_add version --short V --type bool --dest _ARGSH_DO_VERSION \
+		--description "Print version"
+
+	_ARGSH_FLAGS="$_ARGSH_FLAGS_START${_ARGSH_FLAGS}$_ARGSH_FLAGS_END"
+	_ARGSH_POS="${_ARGSH_POS_START}${_ARGSH_POS}$_ARGSH_POS_END"
+	_ARGSH_LOCALS=$_ARGSH_FLAGS_LOCALS $_ARGSH_FLAGS_POS
+	_ARGSH="${_ARGSH_LOCALS:+local $_ARGSH_LOCALS
+
+}# Flag parsing
+$_ARGSH_FLAGS
+
+# Positional parsing
+$_ARGSH_POS
+
+[ \"\$_ARGSH_DO_HELP\" = y ] && {
+	_argsh_help
+	exit 0
+}
+
+[ \"\$_ARGSH_DO_VERSION\" = y ] && {
+	_argsh_version
+	exit 0
+}
+
+# Checking that all required parameters were set
+$_ARGSH_REQ_CHECK
+"
+	eval "$_ARGSH"
+}
+
+arguments() {
+	cmd=$1 && shift && _argsh_cmd_$cmd "$@" #; rc=$?;
+	#[ "$_ARGSH_EAT" -le 0 ] || shift $_ARGSH_EAT;
+	#_argsh_ret $rc
+}

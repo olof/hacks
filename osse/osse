@@ -1,0 +1,31 @@
+#!/bin/sh
+# witch is duplicated from utils, as it's needded to look up
+# where utils is. It's still needed in utils, as that's part
+# of the exported shell script.
+witch() {
+	local name="$1" IFS=: p
+	case $name in
+		*/*)
+			[ -e "$name" ] || return 1
+			echo "$name"
+			return
+			;;
+	esac
+	for p in $PATH; do
+		[ -e "$p/$name" ] && break
+	done
+	[ -e "$p/$name" ] || return 1
+	echo "$p/$name"
+}
+
+UTILS=$(witch utils)
+ARGS=$(witch arg)
+
+PROGRAM=$(witch "$1")
+shift
+
+: ${OSSE_ACTION:=.}
+
+$OSSE_ACTION $UTILS
+$OSSE_ACTION $ARGS
+$OSSE_ACTION "$PROGRAM"
