@@ -1,4 +1,21 @@
 #!/usr/bin/perl
+# The purpose of this script is to clean up w3m output a bit,
+# before presenting to the user in his/her mail user agent.
+# Cleaning means fiddling with whitespace and (optionally)
+# shorten obnoxiously long URLs. If the URL is wider than my
+# terminal, copying it becomes a pain.
+#
+# To enable URL shortening, set the environment variable
+# $MAILCAP_HTML_URL_SHORTENER to a URL providing the following
+# simple API: You POST a text/plain with the url to it, and get
+# back a text/plain with a new url. This script does not care
+# about the behavior of this shortening service besides this
+# specification, and is up to you and your requirements.
+# Implement it however you like.
+#
+# The URL shortening behavior is only used when a URL longer
+# than $MAILCAP_HTML_URL_SHORTENER_MIN_LEN (default 80 chars)
+# is encountered. Shorter URLs are passed on as is.
 use 5.020;
 use LWP::UserAgent ();
 
