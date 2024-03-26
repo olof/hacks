@@ -19,7 +19,7 @@ my ($text, $refs) = $render =~ m{
 		(
 			\[[0-9+]\]
 			\ 
-			(?:https?|file|mailto|tel):.+
+			(?:https?|file|mailto|tel|ftp|git):.+
 		)
 		\n
 	)*
