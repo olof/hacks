@@ -16,6 +16,11 @@
 # The URL shortening behavior is only used when a URL longer
 # than $MAILCAP_HTML_URL_SHORTENER_MIN_LEN (default 80 chars)
 # is encountered. Shorter URLs are passed on as is.
+#
+### TODO:
+# * Async http requests? This could potentially help shortening
+#   the time until the email is rendered for the user, when the
+#   email contains many links.
 use 5.020;
 use LWP::UserAgent ();
 
