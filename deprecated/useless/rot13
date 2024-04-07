@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+# This implementation assumes latin alphabet is encoded
+# sorted a..z and A..Z.
+use constant { A => ord('A'), a => ord('a'),
+               Z => ord('Z'), z => ord('z') };
+sub rebase { [$_[1], $_[0]-$_[1]] }
+sub within { $_[0] - $_[1] >= 0 && $_[0] - $_[1] <= $_[2] - $_[1] }
+sub rot { ($_[0]+13) % 26 }
+print map { chr }
+      map { $_->[0] + $_->[1] }
+      map { $_->[0] ? [$_->[0], rot($_->[1])] : $_ }
+      map { rebase($_, within($_, A, Z) ? A : within($_, a, z) ? a : 0) }
+      map { ord }
+      split //, <>
