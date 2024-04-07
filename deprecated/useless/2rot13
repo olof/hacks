@@ -1,0 +1,2 @@
+#!/bin/sh
+rot13 | rot13
