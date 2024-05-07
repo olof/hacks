@@ -50,7 +50,7 @@ sub parseline {
 			(?:
 				(?<hedge>-{2,})
 			|
-				(?<vedge>\|)(?<content>.*)\k<vedge>
+				(?<vedge>\|)(?<content>[^|]*)\|
 			)
 			(?P<suffix>.*)
 		|
