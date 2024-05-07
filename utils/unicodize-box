@@ -46,7 +46,7 @@ sub parseline {
 
 	/^
 		(?:
-			(?P<prefix>[\h#]*)
+			(?P<prefix>.*?)
 			(?:
 				(?<hedge>-{2,})
 			|
