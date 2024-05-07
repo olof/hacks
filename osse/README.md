@@ -1,7 +1,7 @@
 I discovered having written this and having it lay around
-uncommited. Declarative argparsing. In shell. Such a weird
-hack. I like it. Can't exactly remember what the abbreviation
-stands for...
+uncommited. Declarative argparsing, inspired by Python's
+argparse. But in shell. Such a weird hack. I like it. Can't
+exactly remember what the abbreviation stands for...
 
 * Olof's Strange Shell Experiment?
 * OSSE Shell Scripting Environment?
