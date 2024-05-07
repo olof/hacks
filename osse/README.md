@@ -30,10 +30,10 @@ arguments eval "$@"
 
 case $site in
 	http://*|https://*) ;;
-	??|???) site=https://$1.wiktionary.org ;;
-	*://*) die "Unsupported URI scheme for -m" ;;
+	??|???) site=https://$site.wiktionary.org ;;
+	*://*) die "Unsupported URI scheme ${site%%://*} for -m" ;;
 	'') die "Why is site missing?" ;;
-	*) site=https://$1 ;;
+	*) site=https://$site ;;
 esac
 
 # This doesn't work very well, so don't worry about this.
