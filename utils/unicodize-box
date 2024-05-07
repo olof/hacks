@@ -39,7 +39,7 @@ my %theme_map = map
 		[vedge => "vertical"]
 	);
 
-sub thm { $theme_map{shift()} }
+sub theme { $theme_map{shift()} }
 
 sub parseline {
 	local $_ = shift;
@@ -65,11 +65,11 @@ sub process_hedge {
 	my ($prev, $line) = @_;
 	if ($prev->{vedge}) {
 		$line->{hedge} = join("",
-			thm('corner_dl'),
-			thm('hedge') x ((length $line->{hedge}) - 2),
-			thm('corner_dr'),
+			theme('corner_dl'),
+			theme('hedge') x ((length $line->{hedge}) - 2),
+			theme('corner_dr'),
 		);
-		$prev->{vedge} = thm('vedge')
+		$prev->{vedge} = theme('vedge')
 	}
 	return ($prev, $line);
 }
@@ -77,12 +77,12 @@ sub process_hedge {
 sub process_vedge {
 	my ($prev, $line) = @_;
 	if ($prev->{hedge} or $prev->{vedge}) {
-		$line->{vedge} = thm('vedge');
+		$line->{vedge} = theme('vedge');
 		if ($prev->{hedge}) {
 			$prev->{hedge} = join("",
-				thm('corner_ul'),
-				thm('hedge') x ((length $prev->{hedge}) - 2),
-				thm('corner_ur'),
+				theme('corner_ul'),
+				theme('hedge') x ((length $prev->{hedge}) - 2),
+				theme('corner_ur'),
 			)
 		}
 	} else {
