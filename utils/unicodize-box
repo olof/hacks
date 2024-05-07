@@ -58,7 +58,45 @@ sub parseline {
 		)
 	$/sx;
 
-	return { %+ };
+	my $start = length($+{prefix}) or 0;
+	my $end = $start +
+		($+{hedge} ? (length $+{hedge}) : 0) +
+		($+{vedge} ? (2 + length $+{content}) : 0) +
+		($+{verbatim} ? (length $+{verbatim}) : 0 );
+	return { %+, raw => $&, start => $start, end => $end };
+}
+
+sub extend_vedge_start {
+	my ($line) = @_;
+	my ($prefix, $content, $suffix) = split /\|/, "$line->{content}|$line->{suffix}", 3;
+
+	$prefix = $line->{prefix} . "|$prefix";
+	my $start = length $prefix;
+	my $ret = {
+		%$line,
+		prefix => $prefix,
+		suffix => $suffix,
+		content => $content,
+		start => length $prefix,
+	};
+	return extend_vedge_end($ret) if $ret->{start} == $ret->{end};
+	return $ret
+}
+
+sub extend_vedge_end {
+	my ($line) = @_;
+	my ($content, $suffix) = split /\|/, $line->{suffix}, 2;
+	if ($content eq $line->{suffix}) {
+		return {
+			verbatim => $line->{raw},
+		}
+	}
+	return {
+		%$line,
+		content => "$line->{content}|$content",
+		suffix => $suffix,
+		end => $line->{end} + 1 + length $content,
+	}
 }
 
 sub process_hedge {
@@ -76,8 +114,14 @@ sub process_hedge {
 
 sub process_vedge {
 	my ($prev, $line) = @_;
+	return ($prev, $line) if defined $line->{verbatim};
 	if ($prev->{hedge} or $prev->{vedge}) {
 		$line->{vedge} = theme('vedge');
+		return process_vedge($prev, extend_vedge_start($line))
+			if $prev->{start} != $line->{start};
+		return process_vedge($prev, extend_vedge_end($line))
+			if $prev->{end} != $line->{end};
+
 		if ($prev->{hedge}) {
 			$prev->{hedge} = join("",
 				theme('corner_ul'),
