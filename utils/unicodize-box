@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# ex: ts=4:noex:sw=4
+# ex: ts=4:noet:sw=4
 # unicodize-box: convert your shabby ascii boxes to unicode
 #
 # Reads from stdin or takes a filename as a parameter. Filters the file
