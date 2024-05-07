@@ -53,3 +53,8 @@ Fiddle a little with `$PATH` to try it out without installing it:
 # skip that.
 PATH=$PATH:$PWD/../utils:$PWD ./wikt --help
 ```
+
+The environment also includes some utilities, currently:
+
+ * die, prints a supplied error message and exits process with 1
+ * witch, a shell port of which (maybe i should rename to whish?)
