@@ -167,6 +167,7 @@ while (my $line = <>) {
 print render($prev);
 
 # demo: run the script on the script
+# (some don't work - consider this a roadmap)
 # -----
 # |   |
 # | . |
@@ -175,9 +176,9 @@ print render($prev);
 # x --
 # x ||
 # x --
-# -- --
-# || ||
-# -- --
+# -- -- --
+# || || ||
+# -- -- --
 #  -------
 #  -----
 #  | | |
