@@ -1,0 +1,177 @@
+#!/usr/bin/perl
+use 5.020;
+use warnings;
+use utf8;
+use Test::More;
+
+sub unsupported { die "$_[0] is not supported\n" }
+sub lookup { $_[0]->{$_[1]} // unsupported($_[1]) }
+sub enumerate(@) {
+	my $n = 0;
+	map { $n++, $_ } @_
+}
+sub exp_map {
+	map { 10**$_->[0] => $_->[1] } @_
+}
+
+sub mklang {
+	my ($lang, $vowels, $irregs, $fixups, $parser, $renderer) = @_;
+	my $re = eval "qr/[$vowels]/";
+	return $lang, {
+		irreg => $irregs,
+		fixups => $fixups // [],
+		parse => $parser // sub { },
+		render => $renderer // sub { },
+		vowels => $vowels,
+		vowels_re => $re,
+		ends_in_vowel => sub { shift =~ /$re$/ },
+	}
+}
+
+my $l10n = {
+	mklang('sv', 'aeiouyåäö',
+		{
+			enumerate(qw(noll ett två tre fyra fem sex
+			             sju åtta nio tio elva tolv)),
+			14 => 'fjorton',
+			18 => 'arton',
+			19 => 'nitton',
+			20 => 'tjugo',
+			exp_map([qw(2 hundra)], [qw(3 tusen)], [qw(6 miljon)],
+			        [qw(9 milard)], [qw(12 biljon)], [qw(15 biljard)],
+				[qw(18 triljon)], [qw(21 triljard)]),
+		},
+		[],
+		sub {},
+		sub {
+			my $n = shift;
+			my $opts = shift;
+			if ($n >= 13 and $n <= 19) {
+				my $lsd = $opts->{irreg}->{($n-10)};
+				return sprintf "%s%s%s",
+					$lsd,
+					$opts->{ends_in_vowel}->($lsd) ? 't' : '',
+					"ton";
+			}
+		},
+	),
+	en => {
+		vowels => 'aeiou',
+		irreg => {
+			enumerate qw(zero one two three four five six seven eight nine ten)
+		},
+		fixups => [],
+		parse => sub { },
+		combine => sub { },
+	},
+	de => {
+		irreg => {
+			enumerate qw(null einz zwei drei vier funf sechs sieben acht neun zehn)
+		},
+		fixups => [],
+		parse => sub { },
+		combine => sub { },
+	},
+	es => {
+		irreg => {
+			enumerate qw(cero uno dos tres cuatro cinco seis siete ocho nueve diez)
+		},
+		fixups => [],
+		parse => sub { },
+		combine => sub { },
+	},
+	ar => {
+		irreg => {
+			enumerate qw(sifr wahid ithnan thalata arbaha khamza sitaha sabaha timaniya tissaa asharah)
+		},
+		fixups => [],
+		parse => sub { },
+		combine => sub { },
+	},
+	zh => {
+		irreg => {
+			enumerate(qw(一 二 三 四 五 六 七 八 九 十)),
+			exp_map([qw(2 百)], [qw(3 千)], [qw(4 万)], [qw(6 百万)], [qw(8 亿)],)
+		},
+		fixups => [],
+		parse => sub { },
+		combine => sub { },
+	},
+};
+
+my $parser = {
+	int => sub { shift },
+	sv => sub {
+	},
+	en => sub { },
+};
+my $generator = {
+	int => sub { shift },
+};
+
+sub parse {
+	my ($lang, $str) = @_;
+	my $opts = $l10n->{$lang};
+	my %n = reverse %{$opts->{irreg}};
+	return $n{$str} if exists $n{$str};
+	return $l10n->{$lang}->{parse}->($str, $opts);
+}
+
+sub render {
+	my ($lang, $n) = @_;
+	my $opts = $l10n->{$lang};
+	my %n = %{$opts->{irreg}};
+	return $n{$n} if exists $n{$n};
+	return $l10n->{$lang}->{render}->($n, $opts);
+}
+
+if (not $ENV{UNITTEST}) {
+	my $lang_in = shift;
+	my $lang_out = shift;
+	my $input = shift or die("Usage: $0 <lang in> <lang out> <string>\n");
+
+	say lookup($generator, $lang_out)->(parse($lang_in, $input));
+	exit 0;
+}
+
+sub t {
+	[@_],
+}
+
+my @tests = (
+	[qw(sv noll 0)],
+	[qw(sv ett 1)],
+	[qw(sv åtta 8)],
+	[qw(sv tio 10)],
+	[qw(sv tolv 12)],
+	[qw(sv tretton 13)],
+	[qw(sv hundra 1e+2)],
+	[qw(sv triljon 1e+18)],
+	[qw(sv triljon 1e+18)],
+	#t('sv', 'två triljoner', 2e18),
+	[qw(sv zero)],
+
+	[qw(en zero 0)],
+	[qw(en ten 10)],
+	[qw(en noll)],
+
+	[qw(es cero 0)],
+	[qw(es diez 10)],
+	[qw(en noll)],
+
+	[qw(de null 0)],
+	[qw(de zehn 10)],
+	[qw(de noll)],
+
+	[qw(ar sifr 0)],
+	[qw(ar asharah 10)],
+	[qw(ar noll)],
+	[qw(ar noll)],
+);
+plan tests => int @tests * 2 - int grep { @$_ != 3 } @tests;
+is parse(@{$_}[0, 1]), eval($_->[2] // 'undef'),
+   "parse: $_->[0]: $_->[1] -> " . ($_->[2] // 'undef')
+   for @tests;
+is render($_->[0], eval $_->[2]), $_->[1],
+   "parse: $_->[0]: $_->[1] -> $_->[2]"
+   for grep { @$_ == 3 } @tests;
