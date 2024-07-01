@@ -1,7 +1,7 @@
 #!/usr/bin/jq -rf
 # ex: ft=jq ts=2 sw=2 et
 . as $input |
-$ARGS.named.delim // "/" as $d |
+($ARGS.named.delim // "/") as $d |
   paths |
   . as $p | {
     key: $p,
