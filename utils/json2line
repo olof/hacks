@@ -4,13 +4,13 @@
 $ARGS.named.delim // "/" as $d |
   paths |
   . as $p | {
-    nyckel: $p,
+    key: $p,
     value: $input | getpath($p),
   } |
   select (.value | type | IN ("object", "array") | not) |
   . as $cand |
-  if (.nyckel | [.[] | tostring | contains($d)] | any) then
+  if (.key | [.[] | tostring | contains($d)] | any) then
     error("delimiter key (\($d)) used within keys of input json")
   else
-    [.nyckel | join($d), $cand.value] | join("=")
+    [.key | join($d), $cand.value] | join("=")
   end
