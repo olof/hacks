@@ -62,6 +62,41 @@ filters:
 (xml-simple2yaml uses XML::Simple, which has its weaknesses, but
 allows for a trivial implementation of this tool.)
 
+### json2line
+A jq script to convert a JSON to a line based format.
+
+    {
+      "foo": "bar",
+      "baz": {
+        "lala": [
+          {"qux": "xxxx"},
+          {"kalle": "boll"}
+        ]
+      },
+      "quux": [0, 1, 3, 4],
+      "quuuuuux": 1
+    }
+
+into
+
+    foo=bar
+    baz/lala/0/qux=xxxx
+    baz/lala/1/kalle=boll
+    quux/0=0
+    quux/1=1
+    quux/2=2
+    quux/3=3
+    quux/4=4
+    quuuuuux=1
+
+Called like:
+
+    $ json2line foo.json
+    $ json2line <foo.json
+
+    # To use an alternative delimiter, you can do:
+    $ json2line --arg delim \\ foo.json
+
 ### rfc
 Fetch and open up an ietf rfc in a pager. Also supports
 internet drafts using the -d flag.

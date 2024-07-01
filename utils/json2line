@@ -1,0 +1,16 @@
+#!/usr/bin/jq -rf
+# ex: ft=jq ts=2 sw=2 et
+. as $input |
+$ARGS.named.delim // "/" as $d |
+  paths |
+  . as $p | {
+    nyckel: $p,
+    value: $input | getpath($p),
+  } |
+  select (.value | type | IN ("object", "array") | not) |
+  . as $cand |
+  if (.nyckel | [.[] | tostring | contains($d)] | any) then
+    error("delimiter key (\($d)) used within keys of input json")
+  else
+    [.nyckel | join($d), $cand.value] | join("=")
+  end
