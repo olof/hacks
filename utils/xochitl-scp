@@ -1,0 +1,40 @@
+#!/bin/sh
+die() { echo ERROR: "$@" >&2; exit 1; }
+usage() { die "$0 <fname> <hostname>"; }
+upload_dir=/home/root/.local/share/remarkable/xochitl
+
+fname=$1
+[ "$fname" ] || usage
+
+target=$2
+[ "$target" ] || usage
+
+type=${fname##*.}
+title="$(echo "${fname##*/}" | sed -e "s/'/\\'/g")"
+title=${title%.*}
+
+case $type in
+	epub|pdf) ;;
+	*) die unsupported filetype
+esac
+
+uuid=$(uuidgen)
+now=$(date +%s)
+
+set -x
+scp "$fname" "root@$target:$upload_dir/$uuid.$type"
+echo '{
+    "deleted": false,
+    "lastModified": "'$now'",
+    "metadatamodified": false,
+    "modified": false,
+    "parent": "",
+    "pinned": false,
+    "synced": false,
+    "type": "DocumentType",
+    "version": 1,
+    "visibleName": "'"$title"'"
+}' | ssh "root@$target" tee "'$upload_dir/$uuid.metadata'"
+echo '{
+    "fileType": "'$type'"
+}' | ssh "root@$target" tee "'$upload_dir/$uuid.content'"
