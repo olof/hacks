@@ -61,5 +61,3 @@ dnskey=$( get_dnskey $domain )
 
 gen_keyfile "$dnskey" > tmp.key
 dnssec-dsfromkey tmp.key
-
-exit 0
