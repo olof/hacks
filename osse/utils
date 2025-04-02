@@ -1,5 +1,11 @@
 #!/bin/sh
-die() { echo ERROR: "$@" >&2; exit 1; }
+# Best of class logging facility, inspired by Python's logging framework
+log() { echo "$1:" "$@" >&2; }
+error() { log ERROR "$@"; }
+warn() { log WARN "$@"; }
+info() { log INFO "$@"; }
+
+die() { error "$@"; exit 1; }
 
 witch() {
 	local name="$1" IFS=: p
