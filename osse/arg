@@ -53,8 +53,10 @@ _argsh_version() {
 	echo "$_ARGSH_NAME v$_ARGSH_VERSION"
 }
 
+alias _type_args='local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"'
+
 _argsh_type_store() {
-	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	_type_args
 	_ARGSH_HELP_FLAGS="$_ARGSH_HELP_FLAGS
 $(printf "  %-30s %s" "--$name, -$short <$metavar>  " "$help")"
 	case $default in
@@ -73,7 +75,7 @@ $_ARGSH_FLAGS_START"
 }
 
 _argsh_type_bool() {
-	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	_type_args
 	_ARGSH_HELP_FLAGS="$_ARGSH_HELP_FLAGS
 $(printf "  %-30s %s  " "--$name, -$short" "$help")"
 	_ARGSH_FLAGS="$_ARGSH_FLAGS
@@ -86,7 +88,7 @@ $(printf "  %-30s %s  " "--$name, -$short" "$help")"
 }
 
 _argsh_type_pos() {
-	local name="$1" dest="$2" short="$3" req="$4" help="$5" metavar="$6" default="$7"
+	_type_args
 	if [ "$req" ]; then
 		_ARGSH_HELP_POS="$_ARGSH_HELP_POS <$name>"
 	else

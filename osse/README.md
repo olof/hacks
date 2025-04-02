@@ -45,7 +45,9 @@ selector='#content #firstHeading, .mw-parser-output .disambig-see-also'
 selector-scrape "$site/wiki/$word" "$selector"
 ```
 
-Fiddle a little with `$PATH` to try it out without installing it:
+Fiddle a little with `$PATH` to try it out without installing it
+(why would you install it? please respect your system better
+than that):
 
 ```shell
 # The utils/ directory is needed because of the selector-scrape
@@ -57,4 +59,5 @@ PATH=$PATH:$PWD/../utils:$PWD ./wikt --help
 The environment also includes some utilities, currently:
 
  * die, prints a supplied error message and exits process with 1
- * witch, a shell port of which (maybe i should rename to whish?)
+ * some logging functions (log, info, warn, error)
+ * witch, a shell port of which (maybe i should rename to w(h)ish?)
