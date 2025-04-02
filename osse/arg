@@ -103,14 +103,10 @@ _argsh_type_pos() {
 _argsh_cmd_add() {
 	local name short type dest required description metavar=val default
 
-	# Scan the args once to find the argument name,
-	# to be able to give better error messages.
-	while [ "$#" -gt 1 ]; do
-		case $1 in
-			-*) ;;
-			*) name=$1; dest=ARG_$name; break ;;
-		esac
-	done
+	case $1 in
+		-*) _argsh_croak "arguments add needs name as first arg" ;;
+		*) name=$1; dest=ARG_$name; break ;;
+	esac
 
 	while [ "$#" -gt 0 ]; do
 		case $1 in
