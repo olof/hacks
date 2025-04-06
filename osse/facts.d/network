@@ -1,0 +1,63 @@
+#!/bin/sh
+type ip >/dev/null || exit 1
+type perl >/dev/null || exit 1
+(
+	ip addr; echo
+	ip route
+) | perl -M5.020 -MJSON -e '
+$/=""; my ($addr, $routes) = <>;
+
+$_ = $addr;
+@_ = split /^[0-9]+: /m;
+shift @_;
+# docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+say encode_json {
+	interfaces => [map {
+		s/^
+			(?P<name> [^:]+):
+			(?: \h+ < (?P<flags>[^>]+) >+        )?
+			(?: \h+ mtu   \h+ (?P<mtu>   [0-9]+) )?
+			(?: \h+ qdisc \h+ (?P<qdisc> \h+)    )?
+			(?: \h+ state \h+ (?P<state> \h+)    )?
+			(?: \h+ group \h+ (?P<group> \h+)    )?
+			(?: \h+ qlen  \h+ (?P<qlen>  [0-9]+) )?
+			(?: \h+ \S+   \h+ \S+ )*
+			\h* \n
+		//x;
+		my $if = {%+};
+		$if->{mtu} = int($if->{mtu});
+		$if->{qlen} = int($if->{qlen});
+		$if->{flags} = [split /,/, $if->{flags}];
+
+		s/^    //mg;
+		my @addrs = map { s/\n?$//r } split /^(?=\S)/m;
+		sub addr {
+			$_ = shift;
+			s/^
+				(?P<addr> \S+)(?:\/(?P<prefixlen>[0-9]+))?
+				(?: \h+ brd   \h+ (?P<broadcast> \S+)    )?
+				(?: \h+ scope \h+ (?P<scope>     \S+)    )?
+				(?: \h+ d(?P<dynamic>y)namic             )?
+				(?: \h+ noprefi(?P<noprefixroute>x)route )?
+				(?: \h+ \S+   )*
+				\h* (?: \n
+				  (?: \h+ valid_lft \h+ (?<valid_lft>\S+) )?
+				  (?: \h+ preferred_lft \h+ (?<preferred_lft>\S+) )?
+				)?
+			//x;
+			({%+})
+		}
+		my @inet6 = map { addr($_) } grep { s/^inet6 // } @addrs;
+		my @inet4 = map { addr($_) } grep { s/^inet // } @addrs;
+		my @ether = map { addr($_) } grep { s/^link\/ether // } @addrs;
+		my $addrs = {};
+		$addrs->{ether} = [@ether] if @ether;
+		$addrs->{inet4} = [@inet4] if @inet4;
+		$addrs->{inet6} = [@inet6] if @inet6;
+
+		$if->{addrs} = $addrs;
+		$if;
+		#[@addrs]
+	} @_],
+	routes => [split/\s*\n/,$routes],
+};'

@@ -1,0 +1,40 @@
+#!/usr/bin/env osse
+# ex:ft=sh
+arguments init --name shboll-facts --version 0.1 \
+	--description "shboll remote fact collector"
+
+arguments add state-dir --short S \
+	--type store --dest SHBOLL_STATE_DIR \
+	--default ".shboll-state_$(date +%y%m%d_%H%M%S)" \
+	--description "State directory"
+arguments add facts-dir --short l \
+	--type store --dest SHBOLL_FACTS_DIR \
+	--required \
+	--description "Location of fact scripts to execute"
+arguments add host \
+        --type raw_pos --metavar '[{user}@]{host}' --required \
+	--description "Collect facts from specifed list of targets"
+
+arguments eval "$@"
+shift $_ARGSH_ARG_COUNT
+export SHBOLL_STATE_DIR SHBOLL_FACTS_DIR
+
+rc=0
+for remote in "$@"; do
+	mkdir -p "$SHBOLL_STATE_DIR/$remote" || exit 1
+	for script in $SHBOLL_FACTS_DIR/*; do
+		fact_name=${script##*/}
+		[ -x "$script" ] || continue
+		echo [$remote/$fact_name] >&2
+
+		ssh -oBatchMode=yes -T "$remote" sh \
+		  <"$script" \
+                  >"$SHBOLL_STATE_DIR/$remote/$fact_name"
+
+		case $? in
+		  0) cat $SHBOLL_STATE_DIR/$remote/$fact_name >&2 ;;
+		  *) rc=1
+		esac
+	done
+done
+exit $rc
