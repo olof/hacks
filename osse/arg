@@ -58,7 +58,7 @@ alias _type_args='local name="$1" dest="$2" short="$3" req="$4" help="$5" metava
 _argsh_type_store() {
 	_type_args
 	_ARGSH_HELP_FLAGS="$_ARGSH_HELP_FLAGS
-$(printf "  %-30s %s" "--$name, -$short <$metavar>  " "$help")"
+$(printf "  %-30s %s" "--$name, -$short <${metavar:-val}>  " "$help")"
 	case $default in
 		*\'*) _argsh_bug "default values can't contain ' :-(, i'm sorry"
 	esac
@@ -90,9 +90,9 @@ $(printf "  %-30s %s  " "--$name, -$short" "$help")"
 _argsh_type_pos() {
 	_type_args
 	if [ "$req" ]; then
-		_ARGSH_HELP_POS="$_ARGSH_HELP_POS <$name>"
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS <${metavar:-$name}>"
 	else
-		_ARGSH_HELP_POS="$_ARGSH_HELP_POS [$name]"
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS [${metavar:-$name}]"
 	fi
 	_ARGSH_POS="$_ARGSH_POS
 [ \"\$#\" -lt 1 ] || { $dest=\"\$1\"; shift; }"
@@ -101,7 +101,7 @@ _argsh_type_pos() {
 }
 
 _argsh_cmd_add() {
-	local name short type dest required description metavar=val default
+	local name short check type dest required description metavar default
 
 	case $1 in
 		-*) _argsh_croak "arguments add needs name as first arg" ;;
