@@ -100,6 +100,20 @@ _argsh_type_pos() {
 [ \"\$$dest\" ] || _argsh_missing_pos $name"
 }
 
+# type=raw_pos is only used to improve --help text, allowing
+# the documentation to describe even arguments that aren't
+# actually handled by the arg parser.
+_argsh_type_raw_pos() {
+	_type_args
+	if [ "$req" ]; then
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS <${metavar:-$name} ...>"
+	else
+		_ARGSH_HELP_POS="$_ARGSH_HELP_POS [${metavar:-$name} ...]"
+	fi
+	[ "$req" != y ] || _ARGSH_REQ_CHECK="$_ARGSH_REQ_CHECK
+[ \"\$@\" ] || _argsh_missing_pos $name"
+}
+
 _argsh_cmd_add() {
 	local name short check type dest required description metavar default
 
