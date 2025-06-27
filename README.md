@@ -2,6 +2,23 @@ A collection of small scripts, utilities, **hacks**.
 
 ## utils/: General command line utils
 
+### a68
+
+Generate numerical abbreviations, for whatever reason. Maybe you
+want to work at a search company or something.
+
+
+```console
+$ a68 localization
+l10n
+$ a68 kubernetes
+k8s
+$ a68 abbreviate
+a8e
+$ a68 abbrevi8
+a68
+```
+
 ### atbl
 Produce ascii tables for the terminal. See source code for input
 format. Uses the Perl module Text::ASCIITable to render tables.

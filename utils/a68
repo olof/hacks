@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+BEGIN {
+	return unless $ENV{TEST};
+	require Test::More;
+	my %tests = (
+		localization => 'l10n',
+		internationalization => 'i18n',
+		andreessenhorowitz => 'a16z',
+		abbrevi8 => 'a68',
+		kubernetes => 'k8s',
+		kates => 'k3s',
+		"olof johansson" => 'o12n',
+		"'olof johansson'" =>  'o12n',
+		etc => 'e1c',
+	);
+	Test::More->import(tests => int %tests);
+	is(`TEST= $0 $_`, "$tests{$_}\n", $_) for sort keys %tests;
+}
+print "@ARGV" =~ s/(.)(.*)(.)/$1.(length$2).$3."\n"/er
