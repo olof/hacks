@@ -114,6 +114,26 @@ Called like:
     # To use an alternative delimiter, you can do:
     $ json2line --arg delim \\ foo.json
 
+### markdown-autolinks
+
+When using the reference syntax for links in markdown, you define
+the reference definition separately from its usage. If we follow
+some conventions, we can automate this process for commonly used
+reference sources like Wikipedia or arXiv.
+
+Running this script on a markdown file with undefined sources
+matching the id pattern [prefix:page], this script will automatically
+generate the URLs and append it to the output. Given the following
+input:
+
+    Here is a [link][wp:Foo].
+
+The script will produce the following output:
+
+    Here is a [link][wp:Foo].
+
+    [wp:Foo]: https://en.wikipedia.org/wiki/Foo
+
 ### rfc
 Fetch and open up an ietf rfc in a pager. Also supports
 internet drafts using the -d flag.

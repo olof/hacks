@@ -1,0 +1,59 @@
+#!/bin/sh
+[ "$MAL_TEST" != y ] || {
+	MAL_EXPECT=11625826
+	MAL_TEST=
+	test \
+		"$($0 `command -v $0` | sed '1,/^exit$/d' | sha1sum | head -c 8)" \
+		= \
+		"${MAL_EXPECT:?}" \
+	&& { echo tests passsed; exit 0; } \
+	|| { echo tests failed; exit 1; }
+}
+
+make_link() {
+	case "$1" in
+		wp) make_link wp-en "$2" ;;
+		wt) make_link wt-en "$2" ;;
+		wp-*) printf "https://${1#wp-}.wikpedia.org/wiki/%s\n" \
+			"`printf %s "$2" | uri-encode`" ;;
+		wt-*) printf "https://${1#wt-}.wiktionary.org/wiki/%s\n" \
+			"`printf %s "$2" | uri-encode`" ;;
+		arXiv|arxiv) printf "https://arxiv.org/abs/$2" ;;
+	esac
+}
+
+md="$(cat $1)" && echo "$md" && echo &&
+	echo "$md" |
+	sed '1,/^exit$/d' |
+	grep -oP '(?<!\\)\[\K[^:\]]+:[^\]]+(?=\])' |
+		while read ref; do
+			prefix="${ref%%:*}" page="${ref#*:}"
+			echo "$md" | grep -qF "[$prefix:$page]: " ||
+				printf "[%s] %s\n" \
+					"$prefix:$page" \
+					"$(make_link "$prefix" "$page")"
+		done | LANG=C sort | uniq
+
+exit
+# Foobar baz
+
+This is [test][wp:Software Testing] [data][wp:Test Data] for the
+script. We [test][wp:Software Testing] that we don't produce
+multiple links to the same page. We also test that if we define
+a [reference][wp:reference] ourselves, the script doesn't
+generate one as well.
+
+Can we do [foo][wp:Foo], [bar][wp:Bar] and [baz][wp:Baz] on the
+same line? And why not one in [german][wp-de:Foo] as well?
+
+We \[wp:test] that we can escape the reference.
+
+A [link][link] without a prefix is left as-is. Assumed to have
+its reference be defined manually.
+
+A [wiktionary link][wt:link] is also provided. One in a [foreign
+tongue][wt-sv:tungomål] as well.
+
+[A llama walk into a bar][arXiv:2504.04945].
+
+[wp:reference]: https://en.wikipedia.org/wiki/Wikipedia:Citing_sources
