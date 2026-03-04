@@ -1,9 +1,10 @@
 #!/bin/sh
 : "${LLAMA_CLI:=llama-cli}"
+: "${LLAMA_MODEL:=best_model_over-9001B.gguf}"
 : "${1:?"no prompt supplied"}"
 
 llm() {
-	$LLAMA_CLI -m ~/models/Qwen3-Coder-30B-A3B-Instruct-Q5_K_M.gguf \
+	$LLAMA_CLI -m "${LLAMA_MODEL}" \
 		   --no-warmup --no-conversation --no-display-prompt --simple-io \
 		   "$@"
 }
@@ -14,11 +15,16 @@ filter_llm_noise() {
 
 generate_cmd() {
 	llm -n 32 \
-	    -p "The customer asked me to write a portable unix shell one-liner to solve the following:
+	    -p \
+"The customer asked me to write a portable unix shell one-liner to solve
+the following:
 
 > $1
 
-I was told that it must be on a single line (no newlines) and i must not use any other notation like markdown. Don't use any placeholder values, since the command should be used as-is. I must only transform the input in ways i was explicitly told to.
+I was told that it must be on a single line (no newlines) and i must not use
+any other notation like markdown. Don't use any placeholder values, since the
+command should be used as-is. I must only transform the input in ways i was
+explicitly told to.
 
 This is what I came up with:
 
@@ -28,7 +34,12 @@ This is what I came up with:
 review_cmd() {
 	llm -n 2 --no-conversation --simple-io \
 	    --grammar 'root ::= "yes" | "no"' \
-	    -p "You review shell oneliners for correctness. It is important that the shell script matches the description. You output 'yes' or 'no' only (lowercase). The command should not operate on placeholder filenames like input.txt or similar, unless the description describes it explicitly. It is perfectly fine to solve the problem using external tools like perl, sed, awk or jq.
+	    -p \
+"You review shell oneliners for correctness. It is important that the shell
+script matches the description. You output 'yes' or 'no' only (lowercase).
+The command should not operate on placeholder filenames like input.txt or
+similar, unless the description describes it explicitly. It is perfectly
+fine to solve the problem using external tools like perl, sed, awk or jq.
 
 # INPUT
 Description: $1
