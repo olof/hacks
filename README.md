@@ -248,6 +248,10 @@ Compare cached serial for .se with authoritative data.
     $ se_serial.sh
     Cache is up to date with 2017071408
 
+### se-state.sh
+
+Regularly check the state of an .se/.nu domain. For reasons.
+
 ## devel/: Development utils
 
 ### cpan-release
