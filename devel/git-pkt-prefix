@@ -1,0 +1,4 @@
+#!/usr/bin/perl
+$_=shift;
+$_=shift."\n" if $_ eq "-n";
+printf "%04x%s", length, $_

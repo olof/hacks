@@ -257,6 +257,9 @@ Regularly check the state of an .se/.nu domain. For reasons.
 ### cpan-release
 Upload a new Perl module release to PAUSE (CPAN)
 
+### git-pkt-prefix
+Git pkt protocol line prefixing (strlen in hex)
+
 ### git-wrapper
 Make it possible to override specific git subcommands with shell
 wrappers. Comes with a readme.
