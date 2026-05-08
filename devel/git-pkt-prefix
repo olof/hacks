@@ -1,4 +1,4 @@
 #!/usr/bin/perl
 $_=shift;
 $_=shift."\n" if $_ eq "-n";
-printf "%04x%s", length, $_
+printf "%04x%s", ($_?4:0)+length, $_
