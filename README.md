@@ -45,6 +45,48 @@ Calculate the duration (in days) between two dates.
     $ daterange 1970-01-01 2017-01-01
     17167
 
+### find+
+
+`find` preprocessor with brace expansion support.
+
+`find+` is designed to preprocess `find` lines, with its flag based
+language for selecting and operating on files. It will by default exec
+"find", using PATH lookup, but this can be overriden by setting the
+environment variable `FIND`.
+
+Usage examples:
+
+```console
+$ find+ -type f -name 'f{inn,em,el}...'
+# same as:
+$ find -type f \( -name finn... -o -name fem... -o name fel... \)
+```
+
+```console
+$ find+ -type f -name '{a,b}{1,2}'
+# same as:
+$ find -type f ( -name a1 -o -name a2 -o -name b1 -o -name b2 )
+```
+
+For interactive usage, you could alias find+ as find, but be aware
+that doing so will make taking such a command and using it in a script
+harder. Don't alias find+ as find in non-interactive environments, since
+that will impact scripts not aware of find+ and might lead to rare but
+very hard to diagnose bugs.
+
+Probably don't use find+ in scripts, since that will add a dependency
+to find+ - think of it more as an interactive convenience. If you do,
+probably just call it as find+ to make this dependency explicit. Instead
+of doing that, you could use find+ to expand a find line for you, by
+making find+ call echo instead of find:
+
+```console
+$ FIND=echo find+ -name '{foo,bar}'
+( -name foo -o -name bar )
+```
+
+The output can safely and portably be used in your shell scripts.
+
 ### hashsums-to-tree
 Convert a hashsum list (as outputted by md5sum, sha1sum, etc. to
 a list of files grouped by the content digest.

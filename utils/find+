@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+# find+: find preprocessor with brace expansion support
+use 5.020;
+
+# `find+` is designed to preprocess `find` lines, with its flag based
+# language for selecting and operating on files. It will by default exec
+# "find", using PATH lookup, but this can be overriden by setting the
+# environment variable `FIND`.
+#
+# Usage examples:
+#
+#   $ find+ -type f -name 'f{inn,em,el}...'
+#   # same as:
+#   $ find -type f \( -name finn... -o -name fem... -o name fel... \)
+#
+#   $ find+ -type f -name '{a,b}{1,2}'
+#   # same as:
+#   $ find -type f ( -name a1 -o -name a2 -o -name b1 -o -name b2 )
+#
+# For interactive usage, you could alias find+ as find, but be aware
+# that doing so will make taking such a command and using it in a script
+# harder. Don't alias find+ as find in non-interactive environments, since
+# that will impact scripts not aware of find+ and might lead to rare but
+# very hard to diagnose bugs.
+#
+# Probably don't use find+ in scripts, since that will add a dependency
+# to find+ - think of it more as an interactive convenience. If you do,
+# probably just call it as find+ to make this dependency explicit. Instead
+# of doing that, you could use find+ to expand a find line for you, by
+# making find+ call echo instead of find:
+#
+#   $ FIND=echo find+ -name '{foo,bar}'
+#   ( -name foo -o -name bar )
+#
+# The output can safely and portably be used in your shell scripts.
+
+sub apply {
+	my $f = shift;
+	my $prev = shift;
+	return unless @_;
+
+	my @res;
+	for (@_) {
+		push @res, $f->($prev, $_);
+		$prev = pop @res;
+	}
+	push @res, $prev;
+
+	@res
+}
+
+sub expand {
+	my ($prev, $lvl);
+	($prev, $_, $lvl) = @_;
+
+	return ($prev, $_) unless /(?!<\\){([^}]*(?!<\\))}/;
+	my @args = map { $prev, "$`$_$'", "-o" }
+	           split(/(?!<\\),/, $1);
+	pop @args;
+
+	@args = ('(', @args, ')') unless $lvl;
+	apply(sub { expand(@_, $lvl+1) }, @args);
+}
+
+exec $ENV{FIND} // 'find',
+     apply(\&expand, @ARGV);
