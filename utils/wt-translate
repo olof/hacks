@@ -1,0 +1,4 @@
+#!/bin/sh
+selector-scrape \
+	"https://en.wiktionary.org/wiki/`echo "$1" | tr ' ' '_'`" \
+	'.NavHead, .translations'

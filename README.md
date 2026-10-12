@@ -243,6 +243,38 @@ of corresponding articles in other languages.
     $ wp-translate en sv 'Machine translation'
     Maskinöversättning
 
+### wt-translate
+Use wiktionary as a multi translation lookup. It currently only
+supports looking up English words (it should be easy to add
+support for language selection, and even easier to just override
+locally if you ever need to). The following output is abbreviated
+for illustrative purposes:
+
+    $ wt-translate 'machine translation'
+    act of translating something by means of a machine
+
+    Finnish: koneellinen kääntäminen, konekääntäminen
+    Esperanto: maŝintradukado, maŝintraduko
+    Japanese: 機械翻訳 (ja) (きかいほんやく, kikai hon'yaku)
+    Polish: tłumaczenie maszynowe n
+    Swedish: maskinöversättning (sv) c
+    Ukrainian: машинний переклад m (mašynnyj pereklad)
+
+    act of translating a computer language
+
+    Finnish: konekielelle kääntäminen
+    Japanese: コンピュータ言語の翻訳 (konpyūta gengo no hōnyaku)
+    Polish: tłumaczenie języka programowania n
+    Ukrainian: машинний переклад m (mašynnyj pereklad)
+
+This depends on scraping CSS selectors; that's not really a
+stable API, so please let me know if it breaks. This is intended
+to be used interactively at low rate; it is not intended to be
+used at scale. Use proper APIs for that.
+
+The script assumes `selector-scrape` (available in this repo) is
+present in `$PATH`, as well as its (Python) dependencies.
+
 ## network/: Networking and DNS
 ### aslookup
 Look up Autonomous System Number (ASN) of an IP address.
