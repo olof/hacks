@@ -85,7 +85,10 @@ $ FIND=echo find+ -name '{foo,bar}'
 ( -name foo -o -name bar )
 ```
 
-The output can safely and portably be used in your shell scripts.
+The output can safely and portably be used in your shell scripts
+(except that you will need to quote/escape it properly, this can be
+improved upon by using something more elaborate than echo). The `$FIND`
+variable does not support specifying commands with parameters.
 
 ### hashsums-to-tree
 Convert a hashsum list (as outputted by md5sum, sha1sum, etc. to
